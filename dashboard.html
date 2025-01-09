@@ -1,0 +1,654 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <main role="main">
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+        color: #333;
+    }
+    main {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+    }
+    .filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .filter-item {
+        background-color: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    .filter-item span {
+        margin-left: 5px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .kpis {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        flex-wrap: nowrap;
+    }
+    .kpi-card {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        flex: 1;
+        margin: 10px;
+        min-width: 150px;
+        position: relative;
+    }
+    .kpi-card h3, .kpi-card p {
+        color: #333;
+    }
+    .charts {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+    .chart-container {
+        flex: 1 1 45%;
+        min-width: 300px;
+        max-width: 600px;
+        height: 400px;
+        background-color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        font-size: 14px;
+    }
+    th, td {
+        text-align: left;
+        padding: 10px;
+    }
+    th {
+        background-color: #007bff;
+        color: white;
+    }
+    td {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+    }
+    #exportButton {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: block;
+        margin: 20px auto 0;
+    }
+    #exportButton:hover {
+        background-color: #0056b3;
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .pagination button {
+        background-color: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 0 5px;
+    }
+    .pagination button.disabled {
+        background-color: #ddd;
+        cursor: not-allowed;
+    }
+    @media (max-width: 768px) {
+        .kpis {
+            flex-wrap: wrap;
+        }
+        .kpi-card {
+            flex: 1 1 100%;
+            max-width: 100%;
+        }
+        .charts {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+</style>
+        <header>
+            <h1>Dashboard de Vendas</h1>
+        </header>
+
+        <section class="filters">
+            <div class="filter-group">
+                <label for="filtroRegiao">Região:</label>
+                <select id="filtroRegiao" class="filter-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filtroLoja">Loja:</label>
+                <select id="filtroLoja" class="filter-select">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filtroGrupo">Grupo:</label>
+                <select id="filtroGrupo" class="filter-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filtroVendedor">Vendedor:</label>
+                <select id="filtroVendedor" class="filter-select">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="kpis">
+            <article class="kpi-card">
+                <h2>Total de Vendas</h2>
+                <p id="totalVendas">R$ 0,00</p>
+            </article>
+            <article class="kpi-card">
+                <h2>Ticket Médio</h2>
+                <p id="ticketMedio">R$ 0,00</p>
+            </article>
+            <article class="kpi-card">
+                <h2>Total de Pedidos</h2>
+                <p id="totalPedidos">0</p>
+            </article>
+        </section>
+
+        <section class="charts">
+            <div class="chart-container">
+                <canvas id="vendasPorRegiao"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="vendasPorLoja"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="vendasPorGrupo"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="vendasPorSubgrupo"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="vendasPorMarca"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="vendasPorVendedor"></canvas>
+            </div>
+        </section>
+
+        <section class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Data</th>
+                        <th>Produto</th>
+                        <th>Loja</th>
+                        <th>Vendedor</th>
+                        <th>Quantidade</th>
+                        <th>Preço</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaVendas">
+                </tbody>
+            </table>
+        </section>
+
+        <div class="pagination">
+            <button id="paginaAnterior" class="btn" disabled>Anterior</button>
+            <button id="proximaPagina" class="btn">Próxima</button>
+        </div>
+
+        <button id="exportButton" class="btn btn-primary">Exportar Dados</button>
+
+    </main>
+    <script>
+        // Dataset de vendas
+        const mockData = [
+    {
+        "ID_SAIDA": 2692490,
+        "ID_PEDIDO": 5796655,
+        "DATA": "2024-01-01",
+        "ID_PRODUTO": 16572,
+        "PRODUTO": "LIQUIDIFICADOR WALITA DAILY VERMELHO",
+        "ID_LOJA": 16,
+        "ID_REGIAO": 28,
+        "REGIAO": "REGIONAL 03",
+        "LOJA": "C.M.16 - RUY BARBOSA",
+        "ID_VENDEDOR": 453,
+        "VENDEDOR": "GILMAR GONÇALVES DOS SANTOS",
+        "ID_GRUPO": 234,
+        "GRUPO": "PORTATEIS",
+        "ID_SUBGRUPO": 97,
+        "SUBGRUPO": "LIQUIDIFICADORES",
+        "ID_MARCA": 101,
+        "MARCA": "WALITA",
+        "QUANTIDADE": 1,
+        "PRECO_VENDA": 299,
+        "SUBTOTAL": 299
+    },
+    {
+        "ID_SAIDA": 2692491,
+        "ID_PEDIDO": 5796656,
+        "DATA": "2024-01-02",
+        "ID_PRODUTO": 20285,
+        "PRODUTO": "LAVADORA SEMI AUTO COLORMAQ 20KG BRANCO",
+        "ID_LOJA": 26,
+        "ID_REGIAO": 30,
+        "REGIAO": "REGIONAL 04",
+        "LOJA": "C.M.26 - FEIRA DE SANTANA II",
+        "ID_VENDEDOR": 972,
+        "VENDEDOR": "ELISANGELA GOMES GABRIEL",
+        "ID_GRUPO": 228,
+        "GRUPO": "LINHA BRANCA",
+        "ID_SUBGRUPO": 62,
+        "SUBGRUPO": "LAVADORAS",
+        "ID_MARCA": 81,
+        "MARCA": "COLORMAQ",
+        "QUANTIDADE": 1,
+        "PRECO_VENDA": 799,
+        "SUBTOTAL": 799
+    },
+    {
+        "ID_SAIDA": 2692504,
+        "ID_PEDIDO": 5796667,
+        "DATA": "2024-01-03",
+        "ID_PRODUTO": 21053,
+        "PRODUTO": "APARADOR DE PELOS MONDIAL BODY GROOM 06",
+        "ID_LOJA": 42,
+        "ID_REGIAO": 30,
+        "REGIAO": "REGIONAL 04",
+        "LOJA": "C.M.42 - CAMAÇARI",
+        "ID_VENDEDOR": 943,
+        "VENDEDOR": "ANDREY NASCIMENTO SILVA",
+        "ID_GRUPO": 234,
+        "GRUPO": "PORTATEIS",
+        "ID_SUBGRUPO": 129,
+        "SUBGRUPO": "APARADOR DE PELOS",
+        "ID_MARCA": 132,
+        "MARCA": "MONDIAL",
+        "QUANTIDADE": 1,
+        "PRECO_VENDA": 149,
+        "SUBTOTAL": 149
+    },
+    {
+        "ID_SAIDA": 2692864,
+        "ID_PEDIDO": 5796986,
+        "DATA": "2024-01-04",
+        "ID_PRODUTO": 21972,
+        "PRODUTO": "LAVADORA SEMI AUTO COLORMAQ 15KG BRANCA",
+        "ID_LOJA": 10,
+        "ID_REGIAO": 27,
+        "REGIAO": "REGIONAL 02",
+        "LOJA": "C.M.10 - UTINGA",
+        "ID_VENDEDOR": 318,
+        "VENDEDOR": "DEISY DIAS DE SOUZA",
+        "ID_GRUPO": 228,
+        "GRUPO": "LINHA BRANCA",
+        "ID_SUBGRUPO": 62,
+        "SUBGRUPO": "LAVADORAS",
+        "ID_MARCA": 81,
+        "MARCA": "COLORMAQ",
+        "QUANTIDADE": 1,
+        "PRECO_VENDA": 699,
+        "SUBTOTAL": 699
+    }
+]
+;
+
+        // Funções auxiliares para manipulação dos dados
+        const dataUtils = {
+            calcularTotalVendas: function() {
+                return mockData.reduce((total, item) => total + item.SUBTOTAL, 0);
+            },
+
+            calcularTicketMedio: function() {
+                const total = this.calcularTotalVendas();
+                return total / mockData.length;
+            },
+
+            calcularTotalPedidos: function() {
+                const pedidosUnicos = new Set(mockData.map(item => item.ID_PEDIDO));
+                return pedidosUnicos.size;
+            },
+
+            agruparPorRegiao: function() {
+                return this.agruparPor("REGIAO", "SUBTOTAL");
+            },
+
+            agruparPorLoja: function() {
+                return this.agruparPor("LOJA", "SUBTOTAL");
+            },
+
+            agruparPorVendedor: function() {
+                return this.agruparPor("VENDEDOR", "SUBTOTAL");
+            },
+
+            agruparPorGrupo: function() {
+                return this.agruparPor("GRUPO", "SUBTOTAL");
+            },
+
+            agruparPorSubgrupo: function() {
+                return this.agruparPor("SUBGRUPO", "SUBTOTAL");
+            },
+
+            agruparPorMarca: function() {
+                return this.agruparPor("MARCA", "SUBTOTAL");
+            },
+
+            agruparPor: function(campo, valorCampo) {
+                const agrupamento = mockData.reduce((acc, item) => {
+                    const chave = item[campo];
+                    if (!acc[chave]) {
+                        acc[chave] = 0;
+                    }
+                    acc[chave] += item[valorCampo];
+                    return acc;
+                }, {});
+
+                return Object.entries(agrupamento).map(([chave, valor]) => ({
+                    label: chave,
+                    value: valor
+                }));
+            },
+
+            filtrarPorPeriodo: function(dataInicio, dataFim) {
+                return mockData.filter(item => {
+                    const data = new Date(item.DATA);
+                    return data >= dataInicio && data <= dataFim;
+                });
+            }
+        };
+
+        const colorPalette = [
+            'rgba(255, 99, 132, 0.6)',  // Red
+            'rgba(54, 162, 235, 0.6)',  // Blue
+            'rgba(255, 206, 86, 0.6)',  // Yellow
+            'rgba(75, 192, 192, 0.6)',  // Green
+            'rgba(153, 102, 255, 0.6)', // Purple
+            'rgba(255, 159, 64, 0.6)',  // Orange
+            'rgba(199, 199, 199, 0.6)', // Grey
+            'rgba(255, 99, 71, 0.6)',   // Tomato
+            'rgba(46, 139, 87, 0.6)',   // SeaGreen
+            'rgba(30, 144, 255, 0.6)',  // DodgerBlue
+            'rgba(255, 69, 0, 0.6)',    // OrangeRed
+            'rgba(50, 205, 50, 0.6)',   // LimeGreen
+            'rgba(138, 43, 226, 0.6)',  // BlueViolet
+            'rgba(255, 20, 147, 0.6)',  // DeepPink
+            'rgba(0, 255, 255, 0.6)',   // Cyan
+            'rgba(255, 215, 0, 0.6)',   // Gold
+            'rgba(255, 105, 180, 0.6)', // HotPink
+            'rgba(0, 128, 0, 0.6)',     // Green
+            'rgba(100, 149, 237, 0.6)', // CornflowerBlue
+            'rgba(255, 140, 0, 0.6)',   // DarkOrange
+            'rgba(210, 105, 30, 0.6)',  // Chocolate
+            'rgba(220, 20, 60, 0.6)',   // Crimson
+            'rgba(0, 191, 255, 0.6)',   // DeepSkyBlue
+            'rgba(218, 112, 214, 0.6)', // Orchid
+            'rgba(65, 105, 225, 0.6)',  // RoyalBlue
+            'rgba(123, 104, 238, 0.6)', // MediumSlateBlue
+            'rgba(34, 139, 34, 0.6)',   // ForestGreen
+            'rgba(255, 0, 255, 0.6)',   // Magenta
+            'rgba(255, 182, 193, 0.6)', // LightPink
+            'rgba(173, 216, 230, 0.6)', // LightBlue
+            'rgba(128, 0, 128, 0.6)',   // Purple
+            'rgba(75, 0, 130, 0.6)',    // Indigo
+            'rgba(255, 99, 132, 0.4)',  // LightRed
+            'rgba(54, 162, 235, 0.4)',  // LightBlue
+            'rgba(255, 206, 86, 0.4)',  // LightYellow
+            'rgba(75, 192, 192, 0.4)',  // LightGreen
+            'rgba(153, 102, 255, 0.4)', // LightPurple
+            'rgba(255, 159, 64, 0.4)',  // LightOrange
+            'rgba(199, 199, 199, 0.4)', // LightGrey
+            'rgba(255, 99, 71, 0.4)',   // LightTomato
+            'rgba(46, 139, 87, 0.4)',   // LightSeaGreen
+            'rgba(30, 144, 255, 0.4)',  // LightDodgerBlue
+            'rgba(255, 69, 0, 0.4)',    // LightOrangeRed
+            'rgba(50, 205, 50, 0.4)',   // LightLimeGreen
+            'rgba(138, 43, 226, 0.4)',  // LightBlueViolet
+            'rgba(255, 20, 147, 0.4)',  // LightDeepPink
+            'rgba(0, 255, 255, 0.4)',   // LightCyan
+            'rgba(255, 215, 0, 0.4)',   // LightGold
+            'rgba(255, 105, 180, 0.4)', // LightHotPink
+            'rgba(0, 128, 0, 0.4)',     // LightGreen
+            'rgba(100, 149, 237, 0.4)', // LightCornflowerBlue
+            'rgba(255, 140, 0, 0.4)',   // LightDarkOrange
+            'rgba(210, 105, 30, 0.4)',  // LightChocolate
+            'rgba(220, 20, 60, 0.4)',   // LightCrimson
+            'rgba(0, 191, 255, 0.4)',   // LightDeepSkyBlue
+            'rgba(218, 112, 214, 0.4)', // LightOrchid
+            'rgba(65, 105, 225, 0.4)',  // LightRoyalBlue
+            'rgba(123, 104, 238, 0.4)', // LightMediumSlateBlue
+            'rgba(34, 139, 34, 0.4)',   // LightForestGreen
+            'rgba(255, 0, 255, 0.4)',   // LightMagenta
+            'rgba(255, 182, 193, 0.4)', // LightLightPink
+            'rgba(173, 216, 230, 0.4)', // LightLightBlue
+            'rgba(128, 0, 128, 0.4)',   // LightPurple
+            'rgba(75, 0, 130, 0.4)',    // LightIndigo
+            'rgba(255, 99, 132, 0.8)',  // DarkRed
+            'rgba(54, 162, 235, 0.8)',  // DarkBlue
+            'rgba(255, 206, 86, 0.8)',  // DarkYellow
+            'rgba(75, 192, 192, 0.8)',  // DarkGreen
+            'rgba(153, 102, 255, 0.8)', // DarkPurple
+            'rgba(255, 159, 64, 0.8)',  // DarkOrange
+            'rgba(199, 199, 199, 0.8)', // DarkGrey
+            'rgba(255, 99, 71, 0.8)',   // DarkTomato
+            'rgba(46, 139, 87, 0.8)',   // DarkSeaGreen
+            'rgba(30, 144, 255, 0.8)',  // DarkDodgerBlue
+            'rgba(255, 69, 0, 0.8)',    // DarkOrangeRed
+            'rgba(50, 205, 50, 0.8)',   // DarkLimeGreen
+            'rgba(138, 43, 226, 0.8)',  // DarkBlueViolet
+            'rgba(255, 20, 147, 0.8)',  // DarkDeepPink
+            'rgba(0, 255, 255, 0.8)',   // DarkCyan
+            'rgba(255, 215, 0, 0.8)',   // DarkGold
+            'rgba(255, 105, 180, 0.8)', // DarkHotPink
+            'rgba(0, 128, 0, 0.8)',     // DarkGreen
+            'rgba(100, 149, 237, 0.8)', // DarkCornflowerBlue
+            'rgba(255, 140, 0, 0.8)',   // DarkDarkOrange
+            'rgba(210, 105, 30, 0.8)',  // DarkChocolate
+            'rgba(220, 20, 60, 0.8)',   // DarkCrimson
+            'rgba(0, 191, 255, 0.8)',   // DarkDeepSkyBlue
+            'rgba(218, 112, 214, 0.8)', // DarkOrchid
+            'rgba(65, 105, 225, 0.8)',  // DarkRoyalBlue
+            'rgba(123, 104, 238, 0.8)', // DarkMediumSlateBlue
+            'rgba(34, 139, 34, 0.8)',   // DarkForestGreen
+            'rgba(255, 0, 255, 0.8)',   // DarkMagenta
+            'rgba(255, 182, 193, 0.8)', // DarkLightPink
+            'rgba(173, 216, 230, 0.8)', // DarkLightBlue
+            'rgba(128, 0, 128, 0.8)',   // DarkPurple
+            'rgba(75, 0, 130, 0.8)'     // DarkIndigo
+        ];
+
+
+        // Configurações globais
+        let charts = {};
+        const chartColors = [
+            "#FF9999", "#66B2FF", "#99FF99", "#FFCC99", "#FF99CC", "#99CCFF",
+            "#FFB366", "#99FF99", "#FF99FF", "#99FFCC"
+        ];
+
+        // Inicialização
+        document.addEventListener("DOMContentLoaded", () => {
+            initializeData();
+            initializeCharts();
+            initializeFilters();
+            updateDashboard();
+        });
+
+        function initializeData() {
+            window.dashboardData = {
+                rawData: mockData,
+                filteredData: [...mockData]
+            };
+        }
+
+        function initializeCharts() {
+            const chartConfigs = {
+                vendasPorRegiao: { type: "bar" },
+                vendasPorLoja: { type: "bar" },
+                vendasPorGrupo: { type: "pie" },
+                vendasPorSubgrupo: { type: "pie" },
+                vendasPorMarca: { type: "bar" },
+                vendasPorVendedor: { type: "bar" }
+            };
+
+            Object.entries(chartConfigs).forEach(([chartId, config]) => {
+                const ctx = document.getElementById(chartId).getContext("2d");
+                charts[chartId] = new Chart(ctx, {
+                    type: config.type,
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: chartColors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function updateDashboard() {
+            updateKPIs();
+            updateCharts();
+        }
+
+        function updateKPIs() {
+            const data = window.dashboardData.filteredData;
+            const totalVendas = data.reduce((sum, item) => sum + item.SUBTOTAL, 0);
+            const totalPedidos = new Set(data.map(item => item.ID_PEDIDO)).size;
+            const ticketMedio = totalVendas / totalPedidos;
+
+            document.getElementById("totalVendas").textContent = 
+                new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+                    .format(totalVendas);
+
+            document.getElementById("ticketMedio").textContent = 
+                new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+                    .format(ticketMedio);
+
+            document.getElementById("totalPedidos").textContent = totalPedidos;
+        }
+
+        function updateCharts() {
+            const data = window.dashboardData.filteredData;
+
+            // Atualiza cada gráfico
+            Object.entries(charts).forEach(([chartId, chart]) => {
+                const field = chartId.replace("vendasPor", "").toUpperCase();
+                const aggregated = aggregateData(data, field);
+
+                chart.data.labels = aggregated.map(item => item.label);
+                chart.data.datasets[0].data = aggregated.map(item => item.value);
+                chart.update();
+            });
+        }
+
+        function aggregateData(data, field) {
+            const aggregated = data.reduce((acc, item) => {
+                const key = item[field];
+                if (!acc[key]) acc[key] = 0;
+                acc[key] += item.SUBTOTAL;
+                return acc;
+            }, {});
+
+            return Object.entries(aggregated)
+                .map(([label, value]) => ({ label, value }))
+                .sort((a, b) => b.value - a.value);
+        }
+
+        function initializeFilters() {
+            const filters = {
+                regiao: document.getElementById("filtroRegiao"),
+                loja: document.getElementById("filtroLoja"),
+                grupo: document.getElementById("filtroGrupo"),
+                vendedor: document.getElementById("filtroVendedor")
+            };
+
+            Object.entries(filters).forEach(([key, select]) => {
+                const field = key.toUpperCase();
+                const values = [...new Set(mockData.map(item => item[field]))];
+
+                values.sort().forEach(value => {
+                    const option = document.createElement("option");
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener("change", applyFilters);
+            });
+        }
+
+        function applyFilters() {
+            const filters = {
+                REGIAO: document.getElementById("filtroRegiao").value,
+                LOJA: document.getElementById("filtroLoja").value,
+                GRUPO: document.getElementById("filtroGrupo").value,
+                VENDEDOR: document.getElementById("filtroVendedor").value
+            };
+
+            window.dashboardData.filteredData = window.dashboardData.rawData.filter(item => {
+                return Object.entries(filters).every(([field, value]) => {
+                    return !value || item[field] === value;
+                });
+            });
+
+            updateDashboard();
+        }
+    </script>
+</body>
+</html>

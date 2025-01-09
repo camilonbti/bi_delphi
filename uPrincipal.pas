@@ -5,7 +5,6 @@ interface
 uses
   System.JSON, System.Win.Registry, MSHTML, ActiveX, ComObj,  HtmlGenerator,
   HtmlGenerator_Constants,
-  HtmlGenerator_Validator,
   System.IOUtils,
 
 
@@ -275,20 +274,21 @@ end;
 //  AddToLog('Processo finalizado');
 //end;
 
-
 procedure TForm1.Button1Click(Sender: TObject);
 var
   HTMLContent: TStringList;
   HTMLFilePath: string;
+  StartTime: Cardinal;
+  const TIMEOUT = 30000; // 30 segundos de timeout
 begin
   AddToLog('Iniciando geração do HTML');
   Screen.Cursor := crHourGlass;
 
-  // Define o encoding padrão do sistema
-  DefaultSystemCodePage := CP_UTF8;
-
-  HTMLContent := TStringList.Create;
   try
+    // Configura o encoding UTF-8
+    DefaultSystemCodePage := CP_UTF8;
+
+    HTMLContent := TStringList.Create;
     try
       // Configura o encoding do TStringList
       HTMLContent.DefaultEncoding := TEncoding.UTF8;
@@ -297,21 +297,19 @@ begin
       HTMLContent.Text := THtmlGenerator.GerarHTML;
       AddToLog(Format('HTML gerado com sucesso: %d linhas', [HTMLContent.Count]));
 
-      // Define o caminho do arquivo
-      HTMLFilePath := ExtractFilePath(ParamStr(0)) + 'dashboard_temp2.html';
+      // Define o caminho completo do arquivo
+      HTMLFilePath := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'dashboard.html';
 
-      // Salva o arquivo com encoding UTF-8 com BOM
+      // Salva o arquivo com BOM UTF-8
       HTMLContent.SaveToFile(HTMLFilePath, TEncoding.UTF8);
-      AddToLog('HTML salvo temporariamente em UTF-8: ' + HTMLFilePath);
+      AddToLog('HTML salvo em: ' + HTMLFilePath);
 
-      // Navega para o arquivo usando o caminho completo
+      // Navega para o arquivo usando protocolo file:///
       WebBrowser1.Navigate('file:///' + StringReplace(HTMLFilePath, '\', '/', [rfReplaceAll]));
       AddToLog('Iniciada navegação para o arquivo HTML');
 
-      // Aguarda o carregamento com timeout
-      var StartTime := GetTickCount;
-      const TIMEOUT = 30000; // 30 segundos
-
+      // Aguarda carregamento com timeout
+      StartTime := GetTickCount;
       while WebBrowser1.ReadyState <> READYSTATE_COMPLETE do
       begin
         if GetTickCount - StartTime > TIMEOUT then
@@ -327,16 +325,6 @@ begin
       AddToLog('Dashboard carregado com sucesso');
 
     except
-      on E: EEncodingError do
-      begin
-        AddToLog('Erro de encoding: ' + E.Message);
-        Application.MessageBox(
-          PChar('Erro de codificação ao gerar o dashboard: ' + E.Message),
-          'Erro de Encoding',
-          MB_OK + MB_ICONERROR
-        );
-      end;
-
       on E: Exception do
       begin
         AddToLog('Erro: ' + E.Message);
@@ -354,7 +342,6 @@ begin
     AddToLog('Processo finalizado');
   end;
 end;
-
 
 
 end.

@@ -3,102 +3,58 @@ unit HtmlGenerator;
 interface
 
 uses
-  System.Classes, System.SysUtils, System.IOUtils,
+  System.Classes, System.SysUtils,
+  HtmlGenerator_Base,
+  HtmlGenerator_CSS,
   HtmlGenerator_Content,
-  HtmlGenerator_Validator,
-  HTML_CSS;
+  HtmlGenerator_JS_Core,
+  HtmlGenerator_DATASET,
+  HtmlGenerator_Cores;
 
 type
   THtmlGenerator = class
-  private
-    class var FContent: TStringList;
-    class procedure Initialize;
-    class procedure Finalize;
-    class procedure ValidateContent;
-    class procedure AddHeader;
-    class procedure AddBody;
-
   public
     class function GerarHTML: string;
   end;
 
 implementation
 
-uses uPrincipal;
-
-class procedure THtmlGenerator.Initialize;
-begin
-  FContent := TStringList.Create;
-  FContent.LineBreak := #13#10;
-  FContent.DefaultEncoding := TEncoding.UTF8;
-end;
-
-class procedure THtmlGenerator.Finalize;
-begin
-  FreeAndNil(FContent);
-end;
-
 class function THtmlGenerator.GerarHTML: string;
+var
+  HTML: TStringList;
 begin
+  HTML := TStringList.Create;
   try
-    Initialize;
+    // Gera a estrutura base do HTML
+    HTML.Add(THtmlGeneratorBase.GerarCabecalho);
 
-    // Adiciona as partes do HTML
-    AddHeader;
-    AddBody;
-    AddScripts;
+    // Adiciona os estilos CSS
+    HTML.Add(THtmlGeneratorCSS.GerarCSS);
 
-    // Log do HTML antes da validação
+    // Adiciona o conteúdo HTML
+    HTML.Add(THtmlGeneratorContent.GerarConteudo);
 
-    Form1.AddToLog(FContent.Text +#13+ 'HTML gerado antes da validação');
+    // Fecha a estrutura base até o script
+    HTML.Add('    </main>');
+    HTML.Add('    <script>');
 
-    // Valida o conteúdo
-    ValidateContent;
+    // Adiciona os dados mockados primeiro
+    HTML.Add(THtmlGeneratorDataset.GerarDataset);
 
-    Result := FContent.Text;
+    // Adiciona a paleta de cores
+    HTML.Add(THtmlGeneratorCores.GerarPaletaCores);
+
+    // Adiciona o código JavaScript core
+    HTML.Add(THtmlGeneratorJSCore.GerarJSCore);
+
+    // Fecha os scripts e o HTML
+    HTML.Add('    </script>');
+    HTML.Add('</body>');
+    HTML.Add('</html>');
+
+    Result := HTML.Text;
   finally
-    Finalize;
-  end;
-end;
-
-
-class procedure THtmlGenerator.AddHeader;
-begin
-  with FContent do
-  begin
-    Add('<!DOCTYPE html>');
-    Add('<html lang="pt-BR">');
-    Add('<head>');
-    Add('    <meta charset="UTF-8">');
-    Add('    <meta name="viewport" content="width=device-width, initial-scale=1.0">');
-    Add('    <title>Dashboard de Vendas</title>');
-    Add('    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>');
-    Add('    <style>');
-    Add(THtmlCSS.GetCSS);
-    Add('    </style>');
-    Add('</head>');
-  end;
-end;
-
-class procedure THtmlGenerator.AddBody;
-begin
-  with FContent do
-  begin
-    Add('<body>');
-    Add('    <main role="main">');
-    Add(THtmlGeneratorContent.GerarConteudo);
-    Add('    </main>');
-  end;
-end;
-
-class procedure THtmlGenerator.ValidateContent;
-begin
-  Form1.AddToLog(FContent.Text);
-
-  if not THtmlGeneratorValidator.ValidateHTML(FContent.Text) then
-  begin
-    Form1.AddToLog(FContent.Text + #13 + 'Validação do HTML falhou');
-    raise Exception.Create('HTML gerado é inválido');
+    HTML.Free;
   end;
 end;
 
