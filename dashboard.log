@@ -1,2 +1,1199 @@
-=== Log Iniciado em 09/01/2025 12:53:42 ===
-[2025-01-09 12:54:14.139] [ERROR] Erro: I/O error 105
+[2025-01-09 13:35:30.905] Iniciando geração do HTML
+[2025-01-09 13:35:30.905] <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+.kpis {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.kpi-card {
+    flex: 1;
+    background-color: #fafafa;
+    margin: 0 10px;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.kpi-card h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #555;
+}
+.kpi-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+.table-section {
+    margin-top: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.table-section h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #555;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+.pagination-btn {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.pagination-btn:hover {
+    background-color: #0056b3;
+}
+.pagination-btn[disabled] {
+    background-color: #ddd;
+    color: #999;
+    cursor: not-allowed;
+}
+/* charts.css */
+.chart-card {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+.chart-card h5 {
+    color: #4e73df;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+}
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.2s ease-in-out;
+}
+.chart-tooltip.visible {
+    opacity: 1;
+}
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+.chart-legend-item .color-box {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+}
+.chart-footer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #858796;
+    margin-top: 1rem;
+}
+
+    </style>
+</head>
+<body>
+    <main role="main">
+        <header>
+            <h1>Dashboard de Vendas</h1>
+        </header>
+
+        <nav class="filters" id="filtersContainer">
+            <!-- Filtros aplicados serão exibidos aqui -->
+        </nav>
+
+
+        <section class="kpis">
+            <article class="kpi-card" title="Total de Vendas realizadas no período selecionado.">
+                <h2>Total de Vendas</h2>
+                <p id="totalSales">R$ 0,00</p>
+                <div class="tooltip">Total de Vendas realizadas no período selecionado.</div>
+            </article>
+            <article class="kpi-card" title="Ticket médio das vendas no período selecionado.">
+                <h2>Ticket Médio</h2>
+                <p id="averageTicket">R$ 0,00</p>
+                <div class="tooltip">Ticket médio das vendas no período selecionado.</div>
+            </article>
+            <article class="kpi-card" title="Número total de pedidos realizados no período selecionado.">
+                <h2>Total de Pedidos</h2>
+                <p id="totalOrders">0</p>
+                <div class="tooltip">Número total de pedidos realizados no período selecionado.</div>
+            </article>
+        </section>
+
+
+        <section class="charts">
+            <div class="chart-container" id="salesByRegionContainer">
+                <canvas id="salesByRegionChart"></canvas>
+                <div class="tooltip">Vendas por Região</div>
+            </div>
+            <div class="chart-container" id="salesByStoreContainer">
+                <canvas id="salesByStoreChart"></canvas>
+                <div class="tooltip">Vendas por Loja</div>
+            </div>
+            <div class="chart-container" id="salesByGroupContainer">
+                <canvas id="salesByGroupChart"></canvas>
+                <div class="tooltip">Vendas por Grupo</div>
+            </div>
+            <div class="chart-container" id="salesBySubgroupContainer">
+                <canvas id="salesBySubgroupChart"></canvas>
+                <div class="tooltip">Vendas por Subgrupo</div>
+            </div>
+            <div class="chart-container" id="salesByBrandContainer">
+                <canvas id="salesByBrandChart"></canvas>
+                <div class="tooltip">Vendas por Marca</div>
+            </div>
+            <div class="chart-container" id="salesBySellerContainer">
+                <canvas id="salesBySellerChart"></canvas>
+                <div class="tooltip">Vendas por Vendedor</div>
+            </div>
+        </section>
+
+
+        <section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Produto</th>
+                        <th>Fornecedor</th>
+                        <th>Quantidade</th>
+                        <th>Preço de Venda</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="tableContent">
+                    <!-- Dados da tabela serão inseridos aqui -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="pagination" id="pagination">
+            <!-- Botões de paginação serão adicionados aqui -->
+        </section>
+
+
+        <button id="exportButton">Exportar Dados</button>
+
+    </main>
+    <script>
+        const colorPalette = [
+            'rgba(255, 99, 132, 0.6)',  // Red
+            'rgba(54, 162, 235, 0.6)',  // Blue
+            'rgba(255, 206, 86, 0.6)',  // Yellow
+            'rgba(75, 192, 192, 0.6)',  // Green
+            'rgba(153, 102, 255, 0.6)', // Purple
+            'rgba(255, 159, 64, 0.6)',  // Orange
+            'rgba(199, 199, 199, 0.6)', // Grey
+            'rgba(255, 99, 71, 0.6)',   // Tomato
+            'rgba(46, 139, 87, 0.6)',   // SeaGreen
+            'rgba(30, 144, 255, 0.6)',  // DodgerBlue
+            'rgba(255, 69, 0, 0.6)',    // OrangeRed
+            'rgba(50, 205, 50, 0.6)',   // LimeGreen
+            'rgba(138, 43, 226, 0.6)',  // BlueViolet
+            'rgba(255, 20, 147, 0.6)',  // DeepPink
+            'rgba(0, 255, 255, 0.6)',   // Cyan
+            'rgba(255, 215, 0, 0.6)',   // Gold
+            'rgba(255, 105, 180, 0.6)', // HotPink
+            'rgba(0, 128, 0, 0.6)',     // Green
+            'rgba(100, 149, 237, 0.6)', // CornflowerBlue
+            'rgba(255, 140, 0, 0.6)',   // DarkOrange
+            'rgba(210, 105, 30, 0.6)',  // Chocolate
+            'rgba(220, 20, 60, 0.6)',   // Crimson
+            'rgba(0, 191, 255, 0.6)',   // DeepSkyBlue
+            'rgba(218, 112, 214, 0.6)', // Orchid
+            'rgba(65, 105, 225, 0.6)',  // RoyalBlue
+            'rgba(123, 104, 238, 0.6)', // MediumSlateBlue
+            'rgba(34, 139, 34, 0.6)',   // ForestGreen
+            'rgba(255, 0, 255, 0.6)',   // Magenta
+            'rgba(255, 182, 193, 0.6)', // LightPink
+            'rgba(173, 216, 230, 0.6)', // LightBlue
+            'rgba(128, 0, 128, 0.6)',   // Purple
+            'rgba(75, 0, 130, 0.6)',    // Indigo
+            'rgba(255, 99, 132, 0.4)',  // LightRed
+            'rgba(54, 162, 235, 0.4)',  // LightBlue
+            'rgba(255, 206, 86, 0.4)',  // LightYellow
+            'rgba(75, 192, 192, 0.4)',  // LightGreen
+            'rgba(153, 102, 255, 0.4)', // LightPurple
+            'rgba(255, 159, 64, 0.4)',  // LightOrange
+            'rgba(199, 199, 199, 0.4)', // LightGrey
+            'rgba(255, 99, 71, 0.4)',   // LightTomato
+            'rgba(46, 139, 87, 0.4)',   // LightSeaGreen
+            'rgba(30, 144, 255, 0.4)',  // LightDodgerBlue
+            'rgba(255, 69, 0, 0.4)',    // LightOrangeRed
+            'rgba(50, 205, 50, 0.4)',   // LightLimeGreen
+            'rgba(138, 43, 226, 0.4)',  // LightBlueViolet
+            'rgba(255, 20, 147, 0.4)',  // LightDeepPink
+            'rgba(0, 255, 255, 0.4)',   // LightCyan
+            'rgba(255, 215, 0, 0.4)',   // LightGold
+            'rgba(255, 105, 180, 0.4)', // LightHotPink
+            'rgba(0, 128, 0, 0.4)',     // LightGreen
+            'rgba(100, 149, 237, 0.4)', // LightCornflowerBlue
+            'rgba(255, 140, 0, 0.4)',   // LightDarkOrange
+            'rgba(210, 105, 30, 0.4)',  // LightChocolate
+            'rgba(220, 20, 60, 0.4)',   // LightCrimson
+            'rgba(0, 191, 255, 0.4)',   // LightDeepSkyBlue
+            'rgba(218, 112, 214, 0.4)', // LightOrchid
+            'rgba(65, 105, 225, 0.4)',  // LightRoyalBlue
+            'rgba(123, 104, 238, 0.4)', // LightMediumSlateBlue
+            'rgba(34, 139, 34, 0.4)',   // LightForestGreen
+            'rgba(255, 0, 255, 0.4)',   // LightMagenta
+            'rgba(255, 182, 193, 0.4)', // LightLightPink
+            'rgba(173, 216, 230, 0.4)', // LightLightBlue
+            'rgba(128, 0, 128, 0.4)',   // LightPurple
+            'rgba(75, 0, 130, 0.4)',    // LightIndigo
+            'rgba(255, 99, 132, 0.8)',  // DarkRed
+            'rgba(54, 162, 235, 0.8)',  // DarkBlue
+            'rgba(255, 206, 86, 0.8)',  // DarkYellow
+            'rgba(75, 192, 192, 0.8)',  // DarkGreen
+            'rgba(153, 102, 255, 0.8)', // DarkPurple
+            'rgba(255, 159, 64, 0.8)',  // DarkOrange
+            'rgba(199, 199, 199, 0.8)', // DarkGrey
+            'rgba(255, 99, 71, 0.8)',   // DarkTomato
+            'rgba(46, 139, 87, 0.8)',   // DarkSeaGreen
+            'rgba(30, 144, 255, 0.8)',  // DarkDodgerBlue
+            'rgba(255, 69, 0, 0.8)',    // DarkOrangeRed
+            'rgba(50, 205, 50, 0.8)',   // DarkLimeGreen
+            'rgba(138, 43, 226, 0.8)',  // DarkBlueViolet
+            'rgba(255, 20, 147, 0.8)',  // DarkDeepPink
+            'rgba(0, 255, 255, 0.8)',   // DarkCyan
+            'rgba(255, 215, 0, 0.8)',   // DarkGold
+            'rgba(255, 105, 180, 0.8)', // DarkHotPink
+            'rgba(0, 128, 0, 0.8)',     // DarkGreen
+            'rgba(100, 149, 237, 0.8)', // DarkCornflowerBlue
+            'rgba(255, 140, 0, 0.8)',   // DarkDarkOrange
+            'rgba(210, 105, 30, 0.8)',  // DarkChocolate
+            'rgba(220, 20, 60, 0.8)',   // DarkCrimson
+            'rgba(0, 191, 255, 0.8)',   // DarkDeepSkyBlue
+            'rgba(218, 112, 214, 0.8)', // DarkOrchid
+            'rgba(65, 105, 225, 0.8)',  // DarkRoyalBlue
+            'rgba(123, 104, 238, 0.8)', // DarkMediumSlateBlue
+            'rgba(34, 139, 34, 0.8)',   // DarkForestGreen
+            'rgba(255, 0, 255, 0.8)',   // DarkMagenta
+            'rgba(255, 182, 193, 0.8)', // DarkLightPink
+            'rgba(173, 216, 230, 0.8)', // DarkLightBlue
+            'rgba(128, 0, 128, 0.8)',   // DarkPurple
+            'rgba(75, 0, 130, 0.8)'     // DarkIndigo
+        ];
+
+
+const utils = {
+    formatCurrency(value) {
+        return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        }).format(value);
+    },
+
+    formatNumber(value) {
+        return new Intl.NumberFormat("pt-BR").format(value);
+    },
+
+    formatPercent(value) {
+        return new Intl.NumberFormat("pt-BR", {
+            style: "percent",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
+    },
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+};
+// Core functionality
+document.addEventListener("DOMContentLoaded", function() {
+    setupCharts();
+    updateDashboard();
+});
+
+// Configuração dos gráficos
+function setupCharts() {
+    setupRegionChart();
+    setupStoreChart();
+    setupGroupChart();
+}
+
+function setupRegionChart() {
+    const ctx = document.getElementById("salesByRegion").getContext("2d");
+    return new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Vendas por Região",
+                data: [],
+                backgroundColor: []
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+
+    </script>
+</body>
+</html>
+
+HTML gerado antes da validação
+[2025-01-09 13:35:30.921] <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+.kpis {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.kpi-card {
+    flex: 1;
+    background-color: #fafafa;
+    margin: 0 10px;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.kpi-card h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #555;
+}
+.kpi-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+.table-section {
+    margin-top: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.table-section h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #555;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+.pagination-btn {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.pagination-btn:hover {
+    background-color: #0056b3;
+}
+.pagination-btn[disabled] {
+    background-color: #ddd;
+    color: #999;
+    cursor: not-allowed;
+}
+/* charts.css */
+.chart-card {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+.chart-card h5 {
+    color: #4e73df;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+}
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.2s ease-in-out;
+}
+.chart-tooltip.visible {
+    opacity: 1;
+}
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+.chart-legend-item .color-box {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+}
+.chart-footer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #858796;
+    margin-top: 1rem;
+}
+
+    </style>
+</head>
+<body>
+    <main role="main">
+        <header>
+            <h1>Dashboard de Vendas</h1>
+        </header>
+
+        <nav class="filters" id="filtersContainer">
+            <!-- Filtros aplicados serão exibidos aqui -->
+        </nav>
+
+
+        <section class="kpis">
+            <article class="kpi-card" title="Total de Vendas realizadas no período selecionado.">
+                <h2>Total de Vendas</h2>
+                <p id="totalSales">R$ 0,00</p>
+                <div class="tooltip">Total de Vendas realizadas no período selecionado.</div>
+            </article>
+            <article class="kpi-card" title="Ticket médio das vendas no período selecionado.">
+                <h2>Ticket Médio</h2>
+                <p id="averageTicket">R$ 0,00</p>
+                <div class="tooltip">Ticket médio das vendas no período selecionado.</div>
+            </article>
+            <article class="kpi-card" title="Número total de pedidos realizados no período selecionado.">
+                <h2>Total de Pedidos</h2>
+                <p id="totalOrders">0</p>
+                <div class="tooltip">Número total de pedidos realizados no período selecionado.</div>
+            </article>
+        </section>
+
+
+        <section class="charts">
+            <div class="chart-container" id="salesByRegionContainer">
+                <canvas id="salesByRegionChart"></canvas>
+                <div class="tooltip">Vendas por Região</div>
+            </div>
+            <div class="chart-container" id="salesByStoreContainer">
+                <canvas id="salesByStoreChart"></canvas>
+                <div class="tooltip">Vendas por Loja</div>
+            </div>
+            <div class="chart-container" id="salesByGroupContainer">
+                <canvas id="salesByGroupChart"></canvas>
+                <div class="tooltip">Vendas por Grupo</div>
+            </div>
+            <div class="chart-container" id="salesBySubgroupContainer">
+                <canvas id="salesBySubgroupChart"></canvas>
+                <div class="tooltip">Vendas por Subgrupo</div>
+            </div>
+            <div class="chart-container" id="salesByBrandContainer">
+                <canvas id="salesByBrandChart"></canvas>
+                <div class="tooltip">Vendas por Marca</div>
+            </div>
+            <div class="chart-container" id="salesBySellerContainer">
+                <canvas id="salesBySellerChart"></canvas>
+                <div class="tooltip">Vendas por Vendedor</div>
+            </div>
+        </section>
+
+
+        <section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Produto</th>
+                        <th>Fornecedor</th>
+                        <th>Quantidade</th>
+                        <th>Preço de Venda</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="tableContent">
+                    <!-- Dados da tabela serão inseridos aqui -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="pagination" id="pagination">
+            <!-- Botões de paginação serão adicionados aqui -->
+        </section>
+
+
+        <button id="exportButton">Exportar Dados</button>
+
+    </main>
+    <script>
+        const colorPalette = [
+            'rgba(255, 99, 132, 0.6)',  // Red
+            'rgba(54, 162, 235, 0.6)',  // Blue
+            'rgba(255, 206, 86, 0.6)',  // Yellow
+            'rgba(75, 192, 192, 0.6)',  // Green
+            'rgba(153, 102, 255, 0.6)', // Purple
+            'rgba(255, 159, 64, 0.6)',  // Orange
+            'rgba(199, 199, 199, 0.6)', // Grey
+            'rgba(255, 99, 71, 0.6)',   // Tomato
+            'rgba(46, 139, 87, 0.6)',   // SeaGreen
+            'rgba(30, 144, 255, 0.6)',  // DodgerBlue
+            'rgba(255, 69, 0, 0.6)',    // OrangeRed
+            'rgba(50, 205, 50, 0.6)',   // LimeGreen
+            'rgba(138, 43, 226, 0.6)',  // BlueViolet
+            'rgba(255, 20, 147, 0.6)',  // DeepPink
+            'rgba(0, 255, 255, 0.6)',   // Cyan
+            'rgba(255, 215, 0, 0.6)',   // Gold
+            'rgba(255, 105, 180, 0.6)', // HotPink
+            'rgba(0, 128, 0, 0.6)',     // Green
+            'rgba(100, 149, 237, 0.6)', // CornflowerBlue
+            'rgba(255, 140, 0, 0.6)',   // DarkOrange
+            'rgba(210, 105, 30, 0.6)',  // Chocolate
+            'rgba(220, 20, 60, 0.6)',   // Crimson
+            'rgba(0, 191, 255, 0.6)',   // DeepSkyBlue
+            'rgba(218, 112, 214, 0.6)', // Orchid
+            'rgba(65, 105, 225, 0.6)',  // RoyalBlue
+            'rgba(123, 104, 238, 0.6)', // MediumSlateBlue
+            'rgba(34, 139, 34, 0.6)',   // ForestGreen
+            'rgba(255, 0, 255, 0.6)',   // Magenta
+            'rgba(255, 182, 193, 0.6)', // LightPink
+            'rgba(173, 216, 230, 0.6)', // LightBlue
+            'rgba(128, 0, 128, 0.6)',   // Purple
+            'rgba(75, 0, 130, 0.6)',    // Indigo
+            'rgba(255, 99, 132, 0.4)',  // LightRed
+            'rgba(54, 162, 235, 0.4)',  // LightBlue
+            'rgba(255, 206, 86, 0.4)',  // LightYellow
+            'rgba(75, 192, 192, 0.4)',  // LightGreen
+            'rgba(153, 102, 255, 0.4)', // LightPurple
+            'rgba(255, 159, 64, 0.4)',  // LightOrange
+            'rgba(199, 199, 199, 0.4)', // LightGrey
+            'rgba(255, 99, 71, 0.4)',   // LightTomato
+            'rgba(46, 139, 87, 0.4)',   // LightSeaGreen
+            'rgba(30, 144, 255, 0.4)',  // LightDodgerBlue
+            'rgba(255, 69, 0, 0.4)',    // LightOrangeRed
+            'rgba(50, 205, 50, 0.4)',   // LightLimeGreen
+            'rgba(138, 43, 226, 0.4)',  // LightBlueViolet
+            'rgba(255, 20, 147, 0.4)',  // LightDeepPink
+            'rgba(0, 255, 255, 0.4)',   // LightCyan
+            'rgba(255, 215, 0, 0.4)',   // LightGold
+            'rgba(255, 105, 180, 0.4)', // LightHotPink
+            'rgba(0, 128, 0, 0.4)',     // LightGreen
+            'rgba(100, 149, 237, 0.4)', // LightCornflowerBlue
+            'rgba(255, 140, 0, 0.4)',   // LightDarkOrange
+            'rgba(210, 105, 30, 0.4)',  // LightChocolate
+            'rgba(220, 20, 60, 0.4)',   // LightCrimson
+            'rgba(0, 191, 255, 0.4)',   // LightDeepSkyBlue
+            'rgba(218, 112, 214, 0.4)', // LightOrchid
+            'rgba(65, 105, 225, 0.4)',  // LightRoyalBlue
+            'rgba(123, 104, 238, 0.4)', // LightMediumSlateBlue
+            'rgba(34, 139, 34, 0.4)',   // LightForestGreen
+            'rgba(255, 0, 255, 0.4)',   // LightMagenta
+            'rgba(255, 182, 193, 0.4)', // LightLightPink
+            'rgba(173, 216, 230, 0.4)', // LightLightBlue
+            'rgba(128, 0, 128, 0.4)',   // LightPurple
+            'rgba(75, 0, 130, 0.4)',    // LightIndigo
+            'rgba(255, 99, 132, 0.8)',  // DarkRed
+            'rgba(54, 162, 235, 0.8)',  // DarkBlue
+            'rgba(255, 206, 86, 0.8)',  // DarkYellow
+            'rgba(75, 192, 192, 0.8)',  // DarkGreen
+            'rgba(153, 102, 255, 0.8)', // DarkPurple
+            'rgba(255, 159, 64, 0.8)',  // DarkOrange
+            'rgba(199, 199, 199, 0.8)', // DarkGrey
+            'rgba(255, 99, 71, 0.8)',   // DarkTomato
+            'rgba(46, 139, 87, 0.8)',   // DarkSeaGreen
+            'rgba(30, 144, 255, 0.8)',  // DarkDodgerBlue
+            'rgba(255, 69, 0, 0.8)',    // DarkOrangeRed
+            'rgba(50, 205, 50, 0.8)',   // DarkLimeGreen
+            'rgba(138, 43, 226, 0.8)',  // DarkBlueViolet
+            'rgba(255, 20, 147, 0.8)',  // DarkDeepPink
+            'rgba(0, 255, 255, 0.8)',   // DarkCyan
+            'rgba(255, 215, 0, 0.8)',   // DarkGold
+            'rgba(255, 105, 180, 0.8)', // DarkHotPink
+            'rgba(0, 128, 0, 0.8)',     // DarkGreen
+            'rgba(100, 149, 237, 0.8)', // DarkCornflowerBlue
+            'rgba(255, 140, 0, 0.8)',   // DarkDarkOrange
+            'rgba(210, 105, 30, 0.8)',  // DarkChocolate
+            'rgba(220, 20, 60, 0.8)',   // DarkCrimson
+            'rgba(0, 191, 255, 0.8)',   // DarkDeepSkyBlue
+            'rgba(218, 112, 214, 0.8)', // DarkOrchid
+            'rgba(65, 105, 225, 0.8)',  // DarkRoyalBlue
+            'rgba(123, 104, 238, 0.8)', // DarkMediumSlateBlue
+            'rgba(34, 139, 34, 0.8)',   // DarkForestGreen
+            'rgba(255, 0, 255, 0.8)',   // DarkMagenta
+            'rgba(255, 182, 193, 0.8)', // DarkLightPink
+            'rgba(173, 216, 230, 0.8)', // DarkLightBlue
+            'rgba(128, 0, 128, 0.8)',   // DarkPurple
+            'rgba(75, 0, 130, 0.8)'     // DarkIndigo
+        ];
+
+
+const utils = {
+    formatCurrency(value) {
+        return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        }).format(value);
+    },
+
+    formatNumber(value) {
+        return new Intl.NumberFormat("pt-BR").format(value);
+    },
+
+    formatPercent(value) {
+        return new Intl.NumberFormat("pt-BR", {
+            style: "percent",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
+    },
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+};
+// Core functionality
+document.addEventListener("DOMContentLoaded", function() {
+    setupCharts();
+    updateDashboard();
+});
+
+// Configuração dos gráficos
+function setupCharts() {
+    setupRegionChart();
+    setupStoreChart();
+    setupGroupChart();
+}
+
+function setupRegionChart() {
+    const ctx = document.getElementById("salesByRegion").getContext("2d");
+    return new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Vendas por Região",
+                data: [],
+                backgroundColor: []
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+
+    </script>
+</body>
+</html>
+
+[2025-01-09 13:35:30.925] Tag de fechamento inválida: head
+[2025-01-09 13:35:30.925] Tags não fechadas: html,head,meta,meta
+[2025-01-09 13:35:30.925] <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+.kpis {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.kpi-card {
+    flex: 1;
+    background-color: #fafafa;
+    margin: 0 10px;
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.kpi-card h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #555;
+}
+.kpi-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+.table-section {
+    margin-top: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.table-section h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #555;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+.pagination-btn {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.pagination-btn:hover {
+    background-color: #0056b3;
+}
+.pagination-btn[disabled] {
+    background-color: #ddd;
+    color: #999;
+    cursor: not-allowed;
+}
+/* charts.css */
+.chart-card {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+.chart-card h5 {
+    color: #4e73df;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+}
+.chart-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.2s ease-in-out;
+}
+.chart-tooltip.visible {
+    opacity: 1;
+}
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+.chart-legend-item .color-box {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+}
+.chart-footer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #858796;
+    margin-top: 1rem;
+}
+
+    </style>
+</head>
+<body>
+    <main role="main">
+        <header>
+            <h1>Dashboard de Vendas</h1>
+        </header>
+
+        <nav class="filters" id="filtersContainer">
+            <!-- Filtros aplicados serão exibidos aqui -->
+        </nav>
+
+
+        <section class="kpis">
+            <article class="kpi-card" title="Total de Vendas realizadas no período selecionado.">
+                <h2>Total de Vendas</h2>
+                <p id="totalSales">R$ 0,00</p>
+                <div class="tooltip">Total de Vendas realizadas no período selecionado.</div>
+            </article>
+            <article class="kpi-card" title="Ticket médio das vendas no período selecionado.">
+                <h2>Ticket Médio</h2>
+                <p id="averageTicket">R$ 0,00</p>
+                <div class="tooltip">Ticket médio das vendas no período selecionado.</div>
+            </article>
+            <article class="kpi-card" title="Número total de pedidos realizados no período selecionado.">
+                <h2>Total de Pedidos</h2>
+                <p id="totalOrders">0</p>
+                <div class="tooltip">Número total de pedidos realizados no período selecionado.</div>
+            </article>
+        </section>
+
+
+        <section class="charts">
+            <div class="chart-container" id="salesByRegionContainer">
+                <canvas id="salesByRegionChart"></canvas>
+                <div class="tooltip">Vendas por Região</div>
+            </div>
+            <div class="chart-container" id="salesByStoreContainer">
+                <canvas id="salesByStoreChart"></canvas>
+                <div class="tooltip">Vendas por Loja</div>
+            </div>
+            <div class="chart-container" id="salesByGroupContainer">
+                <canvas id="salesByGroupChart"></canvas>
+                <div class="tooltip">Vendas por Grupo</div>
+            </div>
+            <div class="chart-container" id="salesBySubgroupContainer">
+                <canvas id="salesBySubgroupChart"></canvas>
+                <div class="tooltip">Vendas por Subgrupo</div>
+            </div>
+            <div class="chart-container" id="salesByBrandContainer">
+                <canvas id="salesByBrandChart"></canvas>
+                <div class="tooltip">Vendas por Marca</div>
+            </div>
+            <div class="chart-container" id="salesBySellerContainer">
+                <canvas id="salesBySellerChart"></canvas>
+                <div class="tooltip">Vendas por Vendedor</div>
+            </div>
+        </section>
+
+
+        <section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Pedido</th>
+                        <th>Produto</th>
+                        <th>Fornecedor</th>
+                        <th>Quantidade</th>
+                        <th>Preço de Venda</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="tableContent">
+                    <!-- Dados da tabela serão inseridos aqui -->
+                </tbody>
+            </table>
+        </section>
+
+        <section class="pagination" id="pagination">
+            <!-- Botões de paginação serão adicionados aqui -->
+        </section>
+
+
+        <button id="exportButton">Exportar Dados</button>
+
+    </main>
+    <script>
+        const colorPalette = [
+            'rgba(255, 99, 132, 0.6)',  // Red
+            'rgba(54, 162, 235, 0.6)',  // Blue
+            'rgba(255, 206, 86, 0.6)',  // Yellow
+            'rgba(75, 192, 192, 0.6)',  // Green
+            'rgba(153, 102, 255, 0.6)', // Purple
+            'rgba(255, 159, 64, 0.6)',  // Orange
+            'rgba(199, 199, 199, 0.6)', // Grey
+            'rgba(255, 99, 71, 0.6)',   // Tomato
+            'rgba(46, 139, 87, 0.6)',   // SeaGreen
+            'rgba(30, 144, 255, 0.6)',  // DodgerBlue
+            'rgba(255, 69, 0, 0.6)',    // OrangeRed
+            'rgba(50, 205, 50, 0.6)',   // LimeGreen
+            'rgba(138, 43, 226, 0.6)',  // BlueViolet
+            'rgba(255, 20, 147, 0.6)',  // DeepPink
+            'rgba(0, 255, 255, 0.6)',   // Cyan
+            'rgba(255, 215, 0, 0.6)',   // Gold
+            'rgba(255, 105, 180, 0.6)', // HotPink
+            'rgba(0, 128, 0, 0.6)',     // Green
+            'rgba(100, 149, 237, 0.6)', // CornflowerBlue
+            'rgba(255, 140, 0, 0.6)',   // DarkOrange
+            'rgba(210, 105, 30, 0.6)',  // Chocolate
+            'rgba(220, 20, 60, 0.6)',   // Crimson
+            'rgba(0, 191, 255, 0.6)',   // DeepSkyBlue
+            'rgba(218, 112, 214, 0.6)', // Orchid
+            'rgba(65, 105, 225, 0.6)',  // RoyalBlue
+            'rgba(123, 104, 238, 0.6)', // MediumSlateBlue
+            'rgba(34, 139, 34, 0.6)',   // ForestGreen
+            'rgba(255, 0, 255, 0.6)',   // Magenta
+            'rgba(255, 182, 193, 0.6)', // LightPink
+            'rgba(173, 216, 230, 0.6)', // LightBlue
+            'rgba(128, 0, 128, 0.6)',   // Purple
+            'rgba(75, 0, 130, 0.6)',    // Indigo
+            'rgba(255, 99, 132, 0.4)',  // LightRed
+            'rgba(54, 162, 235, 0.4)',  // LightBlue
+            'rgba(255, 206, 86, 0.4)',  // LightYellow
+            'rgba(75, 192, 192, 0.4)',  // LightGreen
+            'rgba(153, 102, 255, 0.4)', // LightPurple
+            'rgba(255, 159, 64, 0.4)',  // LightOrange
+            'rgba(199, 199, 199, 0.4)', // LightGrey
+            'rgba(255, 99, 71, 0.4)',   // LightTomato
+            'rgba(46, 139, 87, 0.4)',   // LightSeaGreen
+            'rgba(30, 144, 255, 0.4)',  // LightDodgerBlue
+            'rgba(255, 69, 0, 0.4)',    // LightOrangeRed
+            'rgba(50, 205, 50, 0.4)',   // LightLimeGreen
+            'rgba(138, 43, 226, 0.4)',  // LightBlueViolet
+            'rgba(255, 20, 147, 0.4)',  // LightDeepPink
+            'rgba(0, 255, 255, 0.4)',   // LightCyan
+            'rgba(255, 215, 0, 0.4)',   // LightGold
+            'rgba(255, 105, 180, 0.4)', // LightHotPink
+            'rgba(0, 128, 0, 0.4)',     // LightGreen
+            'rgba(100, 149, 237, 0.4)', // LightCornflowerBlue
+            'rgba(255, 140, 0, 0.4)',   // LightDarkOrange
+            'rgba(210, 105, 30, 0.4)',  // LightChocolate
+            'rgba(220, 20, 60, 0.4)',   // LightCrimson
+            'rgba(0, 191, 255, 0.4)',   // LightDeepSkyBlue
+            'rgba(218, 112, 214, 0.4)', // LightOrchid
+            'rgba(65, 105, 225, 0.4)',  // LightRoyalBlue
+            'rgba(123, 104, 238, 0.4)', // LightMediumSlateBlue
+            'rgba(34, 139, 34, 0.4)',   // LightForestGreen
+            'rgba(255, 0, 255, 0.4)',   // LightMagenta
+            'rgba(255, 182, 193, 0.4)', // LightLightPink
+            'rgba(173, 216, 230, 0.4)', // LightLightBlue
+            'rgba(128, 0, 128, 0.4)',   // LightPurple
+            'rgba(75, 0, 130, 0.4)',    // LightIndigo
+            'rgba(255, 99, 132, 0.8)',  // DarkRed
+            'rgba(54, 162, 235, 0.8)',  // DarkBlue
+            'rgba(255, 206, 86, 0.8)',  // DarkYellow
+            'rgba(75, 192, 192, 0.8)',  // DarkGreen
+            'rgba(153, 102, 255, 0.8)', // DarkPurple
+            'rgba(255, 159, 64, 0.8)',  // DarkOrange
+            'rgba(199, 199, 199, 0.8)', // DarkGrey
+            'rgba(255, 99, 71, 0.8)',   // DarkTomato
+            'rgba(46, 139, 87, 0.8)',   // DarkSeaGreen
+            'rgba(30, 144, 255, 0.8)',  // DarkDodgerBlue
+            'rgba(255, 69, 0, 0.8)',    // DarkOrangeRed
+            'rgba(50, 205, 50, 0.8)',   // DarkLimeGreen
+            'rgba(138, 43, 226, 0.8)',  // DarkBlueViolet
+            'rgba(255, 20, 147, 0.8)',  // DarkDeepPink
+            'rgba(0, 255, 255, 0.8)',   // DarkCyan
+            'rgba(255, 215, 0, 0.8)',   // DarkGold
+            'rgba(255, 105, 180, 0.8)', // DarkHotPink
+            'rgba(0, 128, 0, 0.8)',     // DarkGreen
+            'rgba(100, 149, 237, 0.8)', // DarkCornflowerBlue
+            'rgba(255, 140, 0, 0.8)',   // DarkDarkOrange
+            'rgba(210, 105, 30, 0.8)',  // DarkChocolate
+            'rgba(220, 20, 60, 0.8)',   // DarkCrimson
+            'rgba(0, 191, 255, 0.8)',   // DarkDeepSkyBlue
+            'rgba(218, 112, 214, 0.8)', // DarkOrchid
+            'rgba(65, 105, 225, 0.8)',  // DarkRoyalBlue
+            'rgba(123, 104, 238, 0.8)', // DarkMediumSlateBlue
+            'rgba(34, 139, 34, 0.8)',   // DarkForestGreen
+            'rgba(255, 0, 255, 0.8)',   // DarkMagenta
+            'rgba(255, 182, 193, 0.8)', // DarkLightPink
+            'rgba(173, 216, 230, 0.8)', // DarkLightBlue
+            'rgba(128, 0, 128, 0.8)',   // DarkPurple
+            'rgba(75, 0, 130, 0.8)'     // DarkIndigo
+        ];
+
+
+const utils = {
+    formatCurrency(value) {
+        return new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        }).format(value);
+    },
+
+    formatNumber(value) {
+        return new Intl.NumberFormat("pt-BR").format(value);
+    },
+
+    formatPercent(value) {
+        return new Intl.NumberFormat("pt-BR", {
+            style: "percent",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
+    },
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+};
+// Core functionality
+document.addEventListener("DOMContentLoaded", function() {
+    setupCharts();
+    updateDashboard();
+});
+
+// Configuração dos gráficos
+function setupCharts() {
+    setupRegionChart();
+    setupStoreChart();
+    setupGroupChart();
+}
+
+function setupRegionChart() {
+    const ctx = document.getElementById("salesByRegion").getContext("2d");
+    return new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Vendas por Região",
+                data: [],
+                backgroundColor: []
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+
+    </script>
+</body>
+</html>
+
+Validação do HTML falhou
+[2025-01-09 13:35:32.942] Erro: HTML gerado é inválido
+[2025-01-09 13:35:34.176] Processo finalizado
+
