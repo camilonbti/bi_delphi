@@ -14,15 +14,19 @@ type
     class function ValidateStructure(const HTML: string): Boolean;
     class function ValidateIDs(const HTML: string): Boolean;
     class function ValidateTags(const HTML: string): Boolean;
+    class function ValidateClosingTags(const HTML: string): Boolean;
   end;
 
 implementation
+
+uses uPrincipal;
 
 class function THtmlGeneratorValidator.ValidateHTML(const HTML: string): Boolean;
 begin
   Result := ValidateStructure(HTML) and
             ValidateIDs(HTML) and
-            ValidateTags(HTML);
+            ValidateTags(HTML) and
+            ValidateClosingTags(HTML);
 end;
 
 class function THtmlGeneratorValidator.ValidateStructure(const HTML: string): Boolean;
@@ -37,12 +41,16 @@ begin
   Stack := TStringList.Create;
   try
     // Encontra todas as tags HTML
-    Regex := TRegEx.Create('</?([a-z][a-z0-9]*)[^>]*>', [roIgnoreCase]);
+    Regex := TRegEx.Create('</?([a-z][a-z0-9]*)[^>]*?(/?)>', [roIgnoreCase]);
     Matches := Regex.Matches(HTML);
 
     for Match in Matches do
     begin
       Tag := Match.Groups[1].Value.ToLower;
+
+      // Ignora tags de auto-fechamento
+      if Match.Groups[2].Value = '/' then
+        Continue;
 
       if Match.Value.StartsWith('</') then
       begin
@@ -55,7 +63,7 @@ begin
         end;
         Stack.Delete(Stack.Count - 1);
       end
-      else if not Match.Value.EndsWith('/>') then
+      else
       begin
         // Tag de abertura
         Stack.Add(Tag);
@@ -86,7 +94,6 @@ begin
     IDs.Sorted := True;
     IDs.Duplicates := dupError;
 
-    // Encontra todos os IDs no HTML
     Regex := TRegEx.Create('id="([^"]*)"', [roIgnoreCase]);
     Matches := Regex.Matches(HTML);
 
@@ -98,7 +105,7 @@ begin
         except
           on E: Exception do
           begin
-            TLogger.Log(llError, 'ID duplicado encontrado: %s', [Match.Groups[1].Value]);
+            Form1.AddToLog('ID duplicado encontrado: ' + Match.Groups[1].Value);
             Result := False;
             Break;
           end;
@@ -107,7 +114,7 @@ begin
     except
       on E: Exception do
       begin
-        TLogger.Log(llError, 'Erro ao validar IDs: %s', [E.Message]);
+        Form1.AddToLog('Erro ao validar IDs: ' + E.Message);
         Result := False;
       end;
     end;
@@ -134,7 +141,6 @@ var
 begin
   Result := True;
 
-  // Encontra todas as tags HTML
   Regex := TRegEx.Create('</?([a-z][a-z0-9]*)[^>]*>', [roIgnoreCase]);
   Matches := Regex.Matches(HTML);
 
@@ -154,7 +160,7 @@ begin
 
     if not IsValid then
     begin
-      TLogger.Log(llError, 'Tag inválida encontrada: %s', [Tag]);
+      Form1.AddToLog('Tag inválida encontrada: ' + Tag);
       Result := False;
       Break;
     end;

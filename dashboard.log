@@ -1,5 +1,6 @@
-[2025-01-09 13:35:30.905] Iniciando geração do HTML
-[2025-01-09 13:35:30.905] <!DOCTYPE html>
+RichEdit1
+[2025-01-09 13:42:43.870] Iniciando geração do HTML
+[2025-01-09 13:42:43.870] <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -397,7 +398,7 @@ function setupRegionChart() {
 </html>
 
 HTML gerado antes da validação
-[2025-01-09 13:35:30.921] <!DOCTYPE html>
+[2025-01-09 13:42:43.870] <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -794,9 +795,7 @@ function setupRegionChart() {
 </body>
 </html>
 
-[2025-01-09 13:35:30.925] Tag de fechamento inválida: head
-[2025-01-09 13:35:30.925] Tags não fechadas: html,head,meta,meta
-[2025-01-09 13:35:30.925] <!DOCTYPE html>
+[2025-01-09 13:42:43.887] <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -1194,6 +1193,5 @@ function setupRegionChart() {
 </html>
 
 Validação do HTML falhou
-[2025-01-09 13:35:32.942] Erro: HTML gerado é inválido
-[2025-01-09 13:35:34.176] Processo finalizado
-
+[2025-01-09 13:42:47.502] Erro: HTML gerado é inválido
+[2025-01-09 13:42:48.924] Processo finalizado

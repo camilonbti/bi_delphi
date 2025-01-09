@@ -5,7 +5,6 @@ interface
 uses
   System.JSON, System.Win.Registry, MSHTML, ActiveX, ComObj,  HtmlGenerator,
   HtmlGenerator_Constants,
-  HtmlGenerator_Logger,
   HtmlGenerator_Validator,
   System.IOUtils,
 
@@ -34,12 +33,11 @@ type
     procedure AbrirDataSet;
     function EscapeJSONValue(const Value: string): string;
     function DatasetToJSON(cds: TClientDataSet): TJSONArray;
-    procedure AddToLog(const Msg: string);
     procedure DefineIEVersion;
     procedure InitializeLogger;
     { Private declarations }
   public
-    { Public declarations }
+    procedure AddToLog(const Msg: string);
   end;
 
 var
@@ -62,8 +60,7 @@ end;
 
 procedure TForm1.InitializeLogger;
 begin
-  TLogger.Initialize; // Inicializa o logger na pasta do executável
-  TLogger.Enabled := True;
+
 end;
 
 procedure TForm1.DefineIEVersion;
@@ -283,90 +280,80 @@ procedure TForm1.Button1Click(Sender: TObject);
 var
   HTMLContent: TStringList;
   HTMLFilePath: string;
-  StartTime: Cardinal;
 begin
-  TLogger.Log(llInfo, LOG_INIT);
+  AddToLog('Iniciando geração do HTML');
   Screen.Cursor := crHourGlass;
+
+  // Define o encoding padrão do sistema
+  DefaultSystemCodePage := CP_UTF8;
+
+  HTMLContent := TStringList.Create;
   try
-    HTMLContent := TStringList.Create;
     try
-      // Configura o encoding
+      // Configura o encoding do TStringList
       HTMLContent.DefaultEncoding := TEncoding.UTF8;
 
       // Gera o HTML
       HTMLContent.Text := THtmlGenerator.GerarHTML;
+      AddToLog(Format('HTML gerado com sucesso: %d linhas', [HTMLContent.Count]));
 
-      // Log do HTML bruto antes da validação
-      AddToLog('=== HTML Bruto Gerado ===');
-      AddToLog(HTMLContent.Text);
-      AddToLog('=== Fim do HTML Bruto ===');
+      // Define o caminho do arquivo
+      HTMLFilePath := ExtractFilePath(ParamStr(0)) + 'dashboard_temp2.html';
 
-      // Define o caminho usando System.IOUtils
-      HTMLFilePath := TPath.Combine(
-        ExtractFilePath(Application.ExeName),
-        'dashboard_temp.html'
-      );
+      // Salva o arquivo com encoding UTF-8 com BOM
+      HTMLContent.SaveToFile(HTMLFilePath, TEncoding.UTF8);
+      AddToLog('HTML salvo temporariamente em UTF-8: ' + HTMLFilePath);
 
-      // Garante que o arquivo não está em uso
-      if FileExists(HTMLFilePath) then
+      // Navega para o arquivo usando o caminho completo
+      WebBrowser1.Navigate('file:///' + StringReplace(HTMLFilePath, '\', '/', [rfReplaceAll]));
+      AddToLog('Iniciada navegação para o arquivo HTML');
+
+      // Aguarda o carregamento com timeout
+      var StartTime := GetTickCount;
+      const TIMEOUT = 30000; // 30 segundos
+
+      while WebBrowser1.ReadyState <> READYSTATE_COMPLETE do
       begin
-        try
-          DeleteFile(HTMLFilePath);
-        except
-          on E: Exception do
-          begin
-            TLogger.Log(llError, 'Não foi possível excluir o arquivo temporário anterior');
-            raise Exception.Create('Arquivo temporário em uso');
-          end;
+        if GetTickCount - StartTime > TIMEOUT then
+        begin
+          AddToLog('Timeout ao aguardar carregamento do dashboard');
+          raise Exception.Create('Timeout ao carregar o dashboard');
         end;
-      end;
 
-      // Salva com encoding UTF-8
-      TFile.WriteAllText(HTMLFilePath, HTMLContent.Text, TEncoding.UTF8);
-      TLogger.Log(llInfo, LOG_HTML_SAVED, [HTMLFilePath]);
-
-      // Verifica WebBrowser
-      if not Assigned(WebBrowser1) then
-        raise Exception.Create(LOG_BROWSER_ERROR);
-
-      // Navega para o arquivo usando URL com encoding correto
-      WebBrowser1.Navigate(
-        'file:///' + StringReplace(HTMLFilePath, '\', '/', [rfReplaceAll])
-      );
-
-      // Aguarda carregar com timeout
-      StartTime := GetTickCount;
-      while (WebBrowser1.ReadyState <> READYSTATE_COMPLETE) and
-            (GetTickCount - StartTime < TIMEOUT_LOAD) do
-      begin
         Application.ProcessMessages;
-        Sleep(SLEEP_INTERVAL);
+        Sleep(50);
       end;
 
-      if WebBrowser1.ReadyState <> READYSTATE_COMPLETE then
+      AddToLog('Dashboard carregado com sucesso');
+
+    except
+      on E: EEncodingError do
       begin
-        TLogger.Log(llError, LOG_TIMEOUT);
-        raise Exception.Create(LOG_TIMEOUT);
-      end
-      else
-        TLogger.Log(llInfo, LOG_DASHBOARD_LOADED);
+        AddToLog('Erro de encoding: ' + E.Message);
+        Application.MessageBox(
+          PChar('Erro de codificação ao gerar o dashboard: ' + E.Message),
+          'Erro de Encoding',
+          MB_OK + MB_ICONERROR
+        );
+      end;
 
-    finally
-      HTMLContent.Free;
+      on E: Exception do
+      begin
+        AddToLog('Erro: ' + E.Message);
+        Application.MessageBox(
+          PChar('Erro ao carregar dashboard: ' + E.Message),
+          'Erro',
+          MB_OK + MB_ICONERROR
+        );
+      end;
     end;
 
-  except
-    on E: Exception do
-    begin
-      TLogger.Log(llError, LOG_ERROR, [E.Message]);
-      ShowMessage(Format(LOG_ERROR, [E.Message]));
-    end;
+  finally
+    HTMLContent.Free;
+    Screen.Cursor := crDefault;
+    AddToLog('Processo finalizado');
   end;
-
-  Screen.Cursor := crDefault;
 end;
-
-
 
 
 

@@ -23,10 +23,13 @@ begin
     HTML.Add('<!DOCTYPE html>');
     HTML.Add('<html lang="pt-BR">');
     HTML.Add('<head>');
-    HTML.Add('    <meta charset="UTF-8">');
-    HTML.Add('    <meta name="viewport" content="width=device-width, initial-scale=1.0">');
+    HTML.Add('    <meta charset="UTF-8" />');
+    HTML.Add('    <meta name="viewport" content="width=device-width, initial-scale=1.0" />');
     HTML.Add('    <title>Dashboard de Vendas</title>');
-    HTML.Add('    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>');
+    HTML.Add('    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"><\/script>');
+    HTML.Add('    <style type="text/css">');
+    // Estilos CSS aqui
+    HTML.Add('    </style>');
     HTML.Add('</head>');
     HTML.Add('<body>');
     HTML.Add('    <main role="main">');
@@ -44,6 +47,9 @@ begin
   HTML := TStringList.Create;
   try
     HTML.Add('    </main>');
+    HTML.Add('    <script type="text/javascript">');
+    HTML.Add('    // Scripts aqui');
+    HTML.Add('    </script>');
     HTML.Add('</body>');
     HTML.Add('</html>');
 

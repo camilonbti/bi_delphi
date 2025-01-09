@@ -5,7 +5,7 @@ interface
 uses
   System.Classes, System.SysUtils, System.IOUtils,
   HtmlGenerator_Content, HtmlGenerator_Scripts,
-  HtmlGenerator_Logger, HtmlGenerator_Validator,
+  HtmlGenerator_Validator,
   HTML_CSS;
 
 type
@@ -23,6 +23,8 @@ type
   end;
 
 implementation
+
+uses uPrincipal;
 
 class procedure THtmlGenerator.Initialize;
 begin
@@ -47,7 +49,8 @@ begin
     AddScripts;
 
     // Log do HTML antes da validação
-    TLogger.LogHTMLContent(FContent.Text, 'HTML gerado antes da validação');
+
+    Form1.AddToLog(FContent.Text +#13+ 'HTML gerado antes da validação');
 
     // Valida o conteúdo
     ValidateContent;
@@ -102,11 +105,11 @@ end;
 
 class procedure THtmlGenerator.ValidateContent;
 begin
-  TLogger.LogHTMLContent(FContent.Text);
+  Form1.AddToLog(FContent.Text);
 
   if not THtmlGeneratorValidator.ValidateHTML(FContent.Text) then
   begin
-    TLogger.LogHTMLContent(FContent.Text, 'Validação do HTML falhou');
+    Form1.AddToLog(FContent.Text + #13 + 'Validação do HTML falhou');
     raise Exception.Create('HTML gerado é inválido');
   end;
 end;
