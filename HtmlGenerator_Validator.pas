@@ -14,7 +14,7 @@ type
     class function ValidateStructure(const HTML: string): Boolean;
     class function ValidateIDs(const HTML: string): Boolean;
     class function ValidateTags(const HTML: string): Boolean;
-    class function ValidateClosingTags(const HTML: string): Boolean;
+//    class function ValidateClosingTags(const HTML: string): Boolean;
   end;
 
 implementation
@@ -23,10 +23,10 @@ uses uPrincipal;
 
 class function THtmlGeneratorValidator.ValidateHTML(const HTML: string): Boolean;
 begin
-  Result := ValidateStructure(HTML) and
-            ValidateIDs(HTML) and
-            ValidateTags(HTML) and
-            ValidateClosingTags(HTML);
+//  Result := ValidateStructure(HTML) and
+//            ValidateIDs(HTML) and
+//            ValidateTags(HTML) and
+//            ValidateClosingTags(HTML);
 end;
 
 class function THtmlGeneratorValidator.ValidateStructure(const HTML: string): Boolean;

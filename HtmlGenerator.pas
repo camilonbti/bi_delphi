@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.IOUtils,
-  HtmlGenerator_Content, HtmlGenerator_Scripts,
+  HtmlGenerator_Content,
   HtmlGenerator_Validator,
   HTML_CSS;
 
@@ -17,7 +17,7 @@ type
     class procedure ValidateContent;
     class procedure AddHeader;
     class procedure AddBody;
-    class procedure AddScripts;
+
   public
     class function GerarHTML: string;
   end;
@@ -88,18 +88,6 @@ begin
     Add('    <main role="main">');
     Add(THtmlGeneratorContent.GerarConteudo);
     Add('    </main>');
-  end;
-end;
-
-class procedure THtmlGenerator.AddScripts;
-begin
-  with FContent do
-  begin
-    Add('    <script>');
-    Add(THtmlGeneratorScripts.GerarScripts);
-    Add('    </script>');
-    Add('</body>');
-    Add('</html>');
   end;
 end;
 
