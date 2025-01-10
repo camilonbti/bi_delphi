@@ -88,39 +88,51 @@ class function TCreateChart.GetChartScriptInternal(const Params: TChartParams): 
 begin
   Result :=
     'document.addEventListener("DOMContentLoaded", function() {' + sLineBreak +
-    Format('  const data_%s = processarDados(mockData, "%s", "%s");', [Params.ContainerID, Params.GroupField, Params.ValueField]) + sLineBreak +
-    Format('  new Chart(document.getElementById("%s").getContext("2d"), {', [Params.ContainerID]) + sLineBreak +
-    '    type: "bar",' + sLineBreak +
+    Format('  const ctx = document.getElementById("%s").getContext("2d");', [Params.ContainerID]) + sLineBreak +
+    Format('  const data = processarDados(mockData, "%s", "%s");', [Params.GroupField, Params.ValueField]) + sLineBreak +
+    '  new Chart(ctx, {' + sLineBreak +
+    Format('    type: "%s",', [GetChartTypeStr(Params.ChartType)]) + sLineBreak +
     '    data: {' + sLineBreak +
-    '      labels: data_%s.labels,' + sLineBreak +
+    '      labels: data.labels,' + sLineBreak +
     '      datasets: [{' + sLineBreak +
-    '        data: data_%s.values,' + sLineBreak +
+    Format('        label: "%s",', [Params.Title]) + sLineBreak +
+    '        data: data.values,' + sLineBreak +
     '        backgroundColor: "rgba(78, 115, 223, 0.6)",' + sLineBreak +
     '        borderRadius: 4,' + sLineBreak +
     '        maxBarThickness: 50' + sLineBreak +
     '      }]' + sLineBreak +
     '    },' + sLineBreak +
-    '    options: {' + sLineBreak +
-    '      responsive: true,' + sLineBreak +
-    '      maintainAspectRatio: false' + sLineBreak +
-    '    }' + sLineBreak +
+    GetChartOptions(Params) + sLineBreak +
     '  });' + sLineBreak +
-    '});' + sLineBreak;
+    '});';
 end;
 
 class function TCreateChart.GetDataProcessingFunction: string;
 begin
   Result :=
+    'function formatMoney(value) {' + sLineBreak +
+    '  return new Intl.NumberFormat("pt-BR", {' + sLineBreak +
+    '    style: "currency",' + sLineBreak +
+    '    currency: "BRL"' + sLineBreak +
+    '  }).format(value);' + sLineBreak +
+    '}' + sLineBreak +
+    '' + sLineBreak +
     'function processarDados(data, groupField, valueField) {' + sLineBreak +
     '  const result = { labels: [], values: [] };' + sLineBreak +
-    '  const groupedData = data.reduce((acc, curr) => {' + sLineBreak +
-    '    acc[curr[groupField]] = (acc[curr[groupField]] || 0) + curr[valueField];' + sLineBreak +
-    '    return acc;' + sLineBreak +
-    '  }, {});' + sLineBreak +
-    '  Object.keys(groupedData).forEach(key => {' + sLineBreak +
-    '    result.labels.push(key);' + sLineBreak +
-    '    result.values.push(groupedData[key]);' + sLineBreak +
+    '  const groupedData = {};' + sLineBreak +
+    '' + sLineBreak +
+    '  data.forEach(item => {' + sLineBreak +
+    '    if (!groupedData[item[groupField]]) {' + sLineBreak +
+    '      groupedData[item[groupField]] = 0;' + sLineBreak +
+    '      result.labels.push(item[groupField]);' + sLineBreak +
+    '    }' + sLineBreak +
+    '    groupedData[item[groupField]] += item[valueField];' + sLineBreak +
     '  });' + sLineBreak +
+    '' + sLineBreak +
+    '  result.labels.forEach(label => {' + sLineBreak +
+    '    result.values.push(groupedData[label]);' + sLineBreak +
+    '  });' + sLineBreak +
+    '' + sLineBreak +
     '  return result;' + sLineBreak +
     '}';
 end;
@@ -128,9 +140,10 @@ end;
 class function TCreateChart.Generate(const Params: TChartParams): string;
 begin
   Result :=
-    '<canvas id="' + Params.ContainerID + '"></canvas>' + sLineBreak +
+    GetDataProcessingFunction + sLineBreak +
+    GetChartContainer(Params) + sLineBreak +
     '<script>' + sLineBreak +
-    'renderChart("' + Params.GroupField + '", "' + Params.ContainerID + '");' + sLineBreak +
+    GetChartScriptInternal(Params) + sLineBreak +
     '</script>';
 end;
 

@@ -4,8 +4,66 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family: Arial; margin: 20px; }
-.container { max-width: 1200px; margin: 0 auto; }
+body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; color: #333; }
+main { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+h1 { color: #333; text-align: center; }
+:root {
+    --primary-color: #4e73df;
+    --success-color: #1cc88a;
+    --warning-color: #f6c23e;
+    --danger-color: #e74a3b;
+}
+.chart-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.15);
+    height: 100%;
+    transition: transform 0.2s ease;
+}
+.charts-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.kpi-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem rgba(58, 59, 69, 0.15);
+    text-align: center;
+}
+.chart-container-father {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    overflow: auto;
+}
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+}
+@keyframes chartFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.chart-container canvas {
+    animation: chartFadeIn 0.5s ease-out;
+}
+@media (max-width: 768px) {
+    .charts-section { grid-template-columns: 1fr; }
+    .chart-container-father { height: 250px; }
+    .kpis { grid-template-columns: 1fr; }
+}
 .table-section {
     background: white;
     border-radius: 0.5rem;
@@ -13,23 +71,112 @@ body { font-family: Arial; margin: 20px; }
     margin-bottom: 1.5rem;
     overflow: hidden;
 }
-.table { width: 100%; border-collapse: collapse; }
-th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
-th { background-color: #4e73df; color: white; }
-</style>
-<style>
-.chart-container { width: 100%; height: auto; min-height: 300px; }
+
+.table {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+}
+.table-header {
+    padding: 1rem;
+    background-color: white;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table th {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+    padding: 0.75rem;
+    white-space: nowrap;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.table tbody tr {
+    transition: all 0.2s;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(78, 115, 223, 0.05);
+    transform: translateY(-1px);
+}
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 50rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.status-concluido {
+    background-color: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.status-pendente {
+    background-color: rgba(246, 194, 62, 0.1);
+    color: #f6c23e;
+}
+
+.status-cancelado {
+    background-color: rgba(231, 74, 59, 0.1);
+    color: #e74a3b;
+}
+@media (max-width: 768px) {
+    .table-container {
+        margin: 0 -1rem;
+    }
+    
+    .description-cell {
+        max-width: 250px;
+    }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div class="container">
-<div class="table-section">
-  <div class="table-header">
-    <h5>Dados de Vendas</h5>
+<main role="main">
+  <header>
+    <h1>Dashboard de Vendas</h1>
+  </header>
+<div class="charts-section">
+  <div class="chart-card">
+    <h5>Vendas por Região</h5>
+    <div class="chart-container-father">
+      <div class="chart-container">
+        <canvas id="salesByRegionChart"></canvas>
+      </div>
+    </div>
   </div>
-  <div class="table-container">
-    <table class="table" id="mainTable">
+  <div class="chart-card">
+    <h5>Vendas por Loja</h5>
+    <div class="chart-container-father">
+      <div class="chart-container">
+        <canvas id="salesByStoreChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="table-section">
+  <div class="table-header">
+    <h5>Lista de Vendas</h5>
+    <button id="exportBtn" class="export-btn">Exportar CSV</button>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
       <thead>
         <tr>
           <th>Data</th>
@@ -42,11 +189,10 @@ th { background-color: #4e73df; color: white; }
       <tbody id="tableBody"></tbody>
     </table>
   </div>
-</div>
-<canvas id="chartVendasRegiao"></canvas>
-</div>
+  <nav id="pagination"></nav>
+</section>
+</main>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
 const mockData = 
 [
     {
@@ -139,39 +285,53 @@ const mockData =
     }
 ];
 
-function populateTable() {
-  const tbody = document.getElementById("tableBody");
-  if (!tbody) return;
-  mockData.forEach(item => {
-    const row = document.createElement("tr");
-    row.innerHTML =       `<td>${item.DATA}</td><td>${item.PRODUTO}</td><td>${item.LOJA}</td><td>${item.VENDEDOR}</td><td>${item.SUBTOTAL}</td>`;
-    tbody.appendChild(row);
-  });
-}
-function renderChart() {
-  const ctx = document.getElementById("chartVendasRegiao").getContext("2d");
-  new Chart(ctx, {
+document.addEventListener("DOMContentLoaded", function() {
+  const data_salesByRegionChart = processarDados(mockData, "ID_REGIAO", "REGIAO", "SUBTOTAL");
+  new Chart(document.getElementById("salesByRegionChart").getContext("2d"), {
     type: "bar",
     data: {
-      labels: mockData.map(item => item.REGIAO),
+      labels: data_salesByRegionChart.labels,
       datasets: [{
-        label: "Vendas por Região",
-        data: mockData.map(item => item.SUBTOTAL),
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1
+        data: data_salesByRegionChart.values,
+        backgroundColor: "rgba(78, 115, 223, 0.6)",
+        borderRadius: 4,
+        maxBarThickness: 50
       }]
     },
     options: {
       responsive: true,
-      scales: {
-        y: { beginAtZero: true }
+      maintainAspectRatio: false,
+      indexAxis: "x",
+      plugins: {
+        title: { display: true, text: "Vendas por Região" },
+        legend: { display: false }
       }
     }
   });
-}
-
+  const data_salesByStoreChart = processarDados(mockData, "ID_LOJA", "LOJA", "SUBTOTAL");
+  new Chart(document.getElementById("salesByStoreChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: data_salesByStoreChart.labels,
+      datasets: [{
+        data: data_salesByStoreChart.values,
+        backgroundColor: "rgba(78, 115, 223, 0.6)",
+        borderRadius: 4,
+        maxBarThickness: 50
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: "y",
+      plugins: {
+        title: { display: true, text: "Vendas por Loja" },
+        legend: { display: false }
+      }
+    }
+  });
 });
+
 </script>
 </body>
 </html>
