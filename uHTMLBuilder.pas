@@ -3,18 +3,7 @@ unit uHTMLBuilder;
 interface
 
 uses
-  System.SysUtils, System.Classes;
-
-type
-  TChartConfig = record
-    CampoAgrupamento: string;
-    CampoCaption: string;
-    CampoValor: string;
-    Titulo: string;
-    ContainerID: string;
-    TipoGrafico: string;
-    Orientacao: string;
-  end;
+  System.SysUtils, System.Classes, HTMLDataset;
 
 type
   THTMLBuilder = class
@@ -39,7 +28,7 @@ type
 
 implementation
 
-uses CreateChart, HTMLDataset, HTML_Chart_CSS, HTML_Table_CSS,
+uses CreateChart, HTML_Chart_CSS, HTML_Table_CSS,
   HTML_Chart_Scripts;
 
 function THTMLBuilder.GetMeta: string;

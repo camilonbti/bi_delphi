@@ -144,7 +144,11 @@ class function THTMLDataset.GetScripts(const ChartConfigs: TArray<TChartConfig>)
 var
   I: Integer;
 begin
-  Result := 'document.addEventListener("DOMContentLoaded", function() {' + sLineBreak;
+  // Primeiro adiciona a função processarDados
+  Result := GetDataProcessingFunction + sLineBreak + sLineBreak;
+
+  // Depois adiciona o event listener com os gráficos
+  Result := Result + 'document.addEventListener("DOMContentLoaded", function() {' + sLineBreak;
 
   for I := 0 to Length(ChartConfigs) - 1 do
   begin
@@ -172,7 +176,17 @@ begin
       Format('      indexAxis: "%s",', [IfThen(ChartConfigs[I].Orientacao = 'horizontal', 'y', 'x')]) + sLineBreak +
       '      plugins: {' + sLineBreak +
       Format('        title: { display: true, text: "%s" },', [ChartConfigs[I].Titulo]) + sLineBreak +
-      '        legend: { display: false }' + sLineBreak +
+      '        legend: { display: false },' + sLineBreak +
+      '        tooltip: {' + sLineBreak +
+      '          callbacks: {' + sLineBreak +
+      '            label: function(context) {' + sLineBreak +
+      '              return new Intl.NumberFormat("pt-BR", {' + sLineBreak +
+      '                style: "currency",' + sLineBreak +
+      '                currency: "BRL"' + sLineBreak +
+      '              }).format(context.raw);' + sLineBreak +
+      '            }' + sLineBreak +
+      '          }' + sLineBreak +
+      '        }' + sLineBreak +
       '      }' + sLineBreak +
       '    }' + sLineBreak +
       '  });' + sLineBreak;
@@ -180,6 +194,7 @@ begin
 
   Result := Result + '});';
 end;
+
 
 
 // Em HTMLDataset.pas
