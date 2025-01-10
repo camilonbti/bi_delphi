@@ -63,11 +63,28 @@ begin
     '      },' + sLineBreak +
     '      scales: {' + sLineBreak +
     '        x: {' + sLineBreak +
+    '          grid: { display: false },' + sLineBreak +
     '          ticks: {' + sLineBreak +
     '            callback: function(value) {' + sLineBreak +
     '              return formatMoney(value);' + sLineBreak +
     '            }' + sLineBreak +
     '          }' + sLineBreak +
+    '        },' + sLineBreak +
+    '        y: {' + sLineBreak +
+    '          grid: { display: false }' + sLineBreak +
+    '        }' + sLineBreak +
+    '      },' + sLineBreak +
+    '      animation: {' + sLineBreak +
+    '        duration: 1000,' + sLineBreak +
+    '        easing: "easeOutQuart"' + sLineBreak +
+    '      },' + sLineBreak +
+    '      datasets: {' + sLineBreak +
+    '        bar: {' + sLineBreak +
+    '          maxBarThickness: 50,' + sLineBreak +
+    '          borderRadius: 4,' + sLineBreak +
+    '          borderSkipped: false,' + sLineBreak +
+    '          categoryPercentage: 0.8,' + sLineBreak +
+    '          barPercentage: 0.9' + sLineBreak +
     '        }' + sLineBreak +
     '      }' + sLineBreak +
     '    }';
@@ -78,11 +95,14 @@ begin
   Result :=
     '<div class="chart-card">' + sLineBreak +
     Format('  <h5>%s</h5>', [Params.Title]) + sLineBreak +
-    '  <div class="chart-container-father">' + sLineBreak +
-    Format('    <div class="chart-container"><canvas id="%s"></canvas></div>', [Params.ContainerID]) + sLineBreak +
+    '  <div class="chart-container-father">' + sLineBreak + // Container pai com scroll
+    Format('    <div class="chart-container">' + sLineBreak + // Container interno flexível
+    '      <canvas id="%s"></canvas>' + sLineBreak +
+    '    </div>', [Params.ContainerID]) + sLineBreak +
     '  </div>' + sLineBreak +
     '</div>';
 end;
+
 
 class function TCreateChart.GetChartScriptInternal(const Params: TChartParams): string;
 begin
@@ -147,6 +167,4 @@ begin
     '</script>';
 end;
 
-
 end.
-

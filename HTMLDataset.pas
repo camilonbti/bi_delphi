@@ -7,28 +7,109 @@ uses
 
 type
   TChartConfig = record
-    CampoAgrupamento: string;
-    CampoCaption: string;
-    CampoValor: string;
-    Titulo: string;
-    ContainerID: string;
-    TipoGrafico: string;
-    Orientacao: string;
+    CampoAgrupamento: string;  // Campo para agrupar (ex: REGIAO, LOJA)
+    CampoCaption: string;      // Campo para exibição (ex: REGIAO, LOJA)
+    CampoValor: string;        // Campo para somar (ex: SUBTOTAL)
+    Titulo: string;            // Título do gráfico
+    ContainerID: string;       // ID do elemento canvas
+    TipoGrafico: string;       // Tipo (bar, pie, line)
+    Orientacao: string;        // Orientação (vertical/horizontal)
   end;
 
-type
   THTMLDataset = class
-  private
-    class function GetDataProcessingFunction: string; static;
-
   public
     class function GetMockData: string;
     class function GetScripts(const ChartConfigs: TArray<TChartConfig>): string;
-
-
+    class function GetDataProcessingFunction: string;
   end;
 
 implementation
+
+class function THTMLDataset.GetDataProcessingFunction: string;
+begin
+  Result :=
+    'function processarDados(data, groupField, captionField, valueField) {' + sLineBreak +
+    '  const result = { labels: [], values: [] };' + sLineBreak +
+    '  const groupedData = data.reduce((acc, curr) => {' + sLineBreak +
+    '    const key = curr[groupField];' + sLineBreak +
+    '    const label = curr[captionField];' + sLineBreak +
+    '    if (!acc[key]) {' + sLineBreak +
+    '      acc[key] = {' + sLineBreak +
+    '        label: label,' + sLineBreak +
+    '        value: 0' + sLineBreak +
+    '      };' + sLineBreak +
+    '    }' + sLineBreak +
+    '    acc[key].value += curr[valueField];' + sLineBreak +
+    '    return acc;' + sLineBreak +
+    '  }, {});' + sLineBreak +
+    '' + sLineBreak +
+    '  Object.keys(groupedData).forEach(key => {' + sLineBreak +
+    '    result.labels.push(groupedData[key].label);' + sLineBreak +
+    '    result.values.push(groupedData[key].value);' + sLineBreak +
+    '  });' + sLineBreak +
+    '' + sLineBreak +
+    '  return result;' + sLineBreak +
+    '}';
+end;
+
+class function THTMLDataset.GetScripts(const ChartConfigs: TArray<TChartConfig>): string;
+var
+  I: Integer;
+begin
+  // Primeiro adiciona a função processarDados
+  Result := GetDataProcessingFunction + sLineBreak + sLineBreak;
+
+  // Depois adiciona o event listener com os gráficos
+  Result := Result + 'document.addEventListener("DOMContentLoaded", function() {' + sLineBreak;
+
+  for I := 0 to Length(ChartConfigs) - 1 do
+  begin
+    Result := Result +
+      Format('  const data_%s = processarDados(mockData, "%s", "%s", "%s");', [
+        ChartConfigs[I].ContainerID,
+        ChartConfigs[I].CampoAgrupamento,
+        ChartConfigs[I].CampoCaption,
+        ChartConfigs[I].CampoValor
+      ]) + sLineBreak +
+      Format('  new Chart(document.getElementById("%s").getContext("2d"), {', [ChartConfigs[I].ContainerID]) + sLineBreak +
+      Format('    type: "%s",', [ChartConfigs[I].TipoGrafico]) + sLineBreak +
+      '    data: {' + sLineBreak +
+      Format('      labels: data_%s.labels,', [ChartConfigs[I].ContainerID]) + sLineBreak +
+      '      datasets: [{' + sLineBreak +
+      Format('        data: data_%s.values,', [ChartConfigs[I].ContainerID]) + sLineBreak +
+      '        backgroundColor: "rgba(78, 115, 223, 0.6)",' + sLineBreak +
+      '        borderRadius: 4,' + sLineBreak +
+      '        maxBarThickness: 50' + sLineBreak +
+      '      }]' + sLineBreak +
+      '    },' + sLineBreak +
+      '    options: {' + sLineBreak +
+      '      responsive: true,' + sLineBreak +
+      '      maintainAspectRatio: false,' + sLineBreak +
+      Format('      indexAxis: "%s",', [IfThen(ChartConfigs[I].Orientacao = 'horizontal', 'y', 'x')]) + sLineBreak +
+      '      plugins: {' + sLineBreak +
+      Format('        title: { display: true, text: "%s" },', [ChartConfigs[I].Titulo]) + sLineBreak +
+      '        legend: { display: false },' + sLineBreak +
+      '        tooltip: {' + sLineBreak +
+      '          callbacks: {' + sLineBreak +
+      '            label: function(context) {' + sLineBreak +
+      '              return new Intl.NumberFormat("pt-BR", {' + sLineBreak +
+      '                style: "currency",' + sLineBreak +
+      '                currency: "BRL"' + sLineBreak +
+      '              }).format(context.raw);' + sLineBreak +
+      '            }' + sLineBreak +
+      '          }' + sLineBreak +
+      '        }' + sLineBreak +
+      '      },' + sLineBreak +
+      '      scales: {' + sLineBreak +
+      '        x: { grid: { display: false } },' + sLineBreak +
+      '        y: { grid: { display: false } }' + sLineBreak +
+      '      }' + sLineBreak +
+      '    }' + sLineBreak +
+      '  });' + sLineBreak + sLineBreak;
+  end;
+
+  Result := Result + '});';
+end;
 
 class function THTMLDataset.GetMockData: string;
 var
@@ -139,94 +220,5 @@ begin
     Dados.Free;
   end;
 end;
-
-class function THTMLDataset.GetScripts(const ChartConfigs: TArray<TChartConfig>): string;
-var
-  I: Integer;
-begin
-  // Primeiro adiciona a função processarDados
-  Result := GetDataProcessingFunction + sLineBreak + sLineBreak;
-
-  // Depois adiciona o event listener com os gráficos
-  Result := Result + 'document.addEventListener("DOMContentLoaded", function() {' + sLineBreak;
-
-  for I := 0 to Length(ChartConfigs) - 1 do
-  begin
-    Result := Result +
-      Format('  const data_%s = processarDados(mockData, "%s", "%s", "%s");', [
-        ChartConfigs[I].ContainerID,
-        ChartConfigs[I].CampoAgrupamento,
-        ChartConfigs[I].CampoCaption,
-        ChartConfigs[I].CampoValor
-      ]) + sLineBreak +
-      Format('  new Chart(document.getElementById("%s").getContext("2d"), {', [ChartConfigs[I].ContainerID]) + sLineBreak +
-      Format('    type: "%s",', [ChartConfigs[I].TipoGrafico]) + sLineBreak +
-      '    data: {' + sLineBreak +
-      Format('      labels: data_%s.labels,', [ChartConfigs[I].ContainerID]) + sLineBreak +
-      '      datasets: [{' + sLineBreak +
-      Format('        data: data_%s.values,', [ChartConfigs[I].ContainerID]) + sLineBreak +
-      '        backgroundColor: "rgba(78, 115, 223, 0.6)",' + sLineBreak +
-      '        borderRadius: 4,' + sLineBreak +
-      '        maxBarThickness: 50' + sLineBreak +
-      '      }]' + sLineBreak +
-      '    },' + sLineBreak +
-      '    options: {' + sLineBreak +
-      '      responsive: true,' + sLineBreak +
-      '      maintainAspectRatio: false,' + sLineBreak +
-      Format('      indexAxis: "%s",', [IfThen(ChartConfigs[I].Orientacao = 'horizontal', 'y', 'x')]) + sLineBreak +
-      '      plugins: {' + sLineBreak +
-      Format('        title: { display: true, text: "%s" },', [ChartConfigs[I].Titulo]) + sLineBreak +
-      '        legend: { display: false },' + sLineBreak +
-      '        tooltip: {' + sLineBreak +
-      '          callbacks: {' + sLineBreak +
-      '            label: function(context) {' + sLineBreak +
-      '              return new Intl.NumberFormat("pt-BR", {' + sLineBreak +
-      '                style: "currency",' + sLineBreak +
-      '                currency: "BRL"' + sLineBreak +
-      '              }).format(context.raw);' + sLineBreak +
-      '            }' + sLineBreak +
-      '          }' + sLineBreak +
-      '        }' + sLineBreak +
-      '      }' + sLineBreak +
-      '    }' + sLineBreak +
-      '  });' + sLineBreak;
-  end;
-
-  Result := Result + '});';
-end;
-
-
-
-// Em HTMLDataset.pas
-class function THTMLDataset.GetDataProcessingFunction: string;
-begin
-  Result :=
-    'function processarDados(data, groupField, captionField, valueField) {' + sLineBreak +
-    '  const result = { labels: [], values: [] };' + sLineBreak +
-    '  const groupedData = data.reduce((acc, curr) => {' + sLineBreak +
-    '    const key = curr[groupField];' + sLineBreak +
-    '    const label = curr[captionField];' + sLineBreak +
-    '    if (!acc[key]) {' + sLineBreak +
-    '      acc[key] = {' + sLineBreak +
-    '        label: label,' + sLineBreak +
-    '        value: 0' + sLineBreak +
-    '      };' + sLineBreak +
-    '    }' + sLineBreak +
-    '    acc[key].value += curr[valueField];' + sLineBreak +
-    '    return acc;' + sLineBreak +
-    '  }, {});' + sLineBreak +
-    '  Object.keys(groupedData).forEach(key => {' + sLineBreak +
-    '    result.labels.push(groupedData[key].label);' + sLineBreak +
-    '    result.values.push(groupedData[key].value);' + sLineBreak +
-    '  });' + sLineBreak +
-    '  return result;' + sLineBreak +
-    '}';
-end;
-
-
-
-
-
-
 
 end.
